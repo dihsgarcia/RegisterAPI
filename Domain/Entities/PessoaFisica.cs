@@ -19,4 +19,26 @@ public class PessoaFisica
         Endereco = endereco;
         EnderecoId = endereco.Id;
     }
+    
+    public void AtualizarNome(string nome)
+    {
+        Nome = nome;
+    }
+
+    public void AtualizarCpf(string cpf)
+    {
+        Cpf = cpf;
+    }
+
+    public void AtualizarEndereco(string cep, string logradouro, string numero, string bairro, string cidade, string uf)
+    {
+        Endereco.Atualizar(
+            cep,
+            logradouro,
+            numero,
+            bairro,
+            cidade,
+            uf);
+    }
+    
 }

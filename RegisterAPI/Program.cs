@@ -1,11 +1,15 @@
 using Application.Configurations;
 using Application.Interfaces;
 using Application.Services;
+using Application.Validators;
 using Domain.Repositories;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
+using RegisterAPI.Middlewares;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +27,9 @@ builder.Services.AddScoped<IPessoaFisicaService, PessoaFisicaService>();
 
 // Controllers
 builder.Services.AddControllers();
+
+builder.Services.AddValidatorsFromAssemblyContaining<CreatePessoaFisicaValidator>();
+builder.Services.AddFluentValidationAutoValidation();
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -47,6 +54,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.MapControllers();
 

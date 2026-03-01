@@ -22,4 +22,14 @@ public class Endereco
         Cidade = cidade;
         Estado = estado;
     }
+    
+    public void Atualizar( string cep, string logradouro, string numero, string bairro, string cidade, string estado)
+    {
+        Cep = cep;
+        Logradouro = logradouro;
+        Numero = numero;
+        Bairro = bairro;
+        Cidade = cidade;
+        Estado = estado;
+    }
 }
