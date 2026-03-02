@@ -6,7 +6,6 @@ using Domain.Entities;
 using Domain.Extensions;
 using Domain.Repositories;
 using Moq;
-using NUnit.Framework;
 
 namespace RegisterAPI.Tests.Application.Services;
 
