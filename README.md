@@ -1,6 +1,6 @@
 # Register API
 
-API REST para cadastro de pessoas físicas e jurídicas com validação de endereço via ViaCEP.
+API REST para cadastro de pessoas físicas e jurídicas com validação de endereço via api ViaCEP.
 
 ## Tecnologias
 
