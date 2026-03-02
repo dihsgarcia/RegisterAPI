@@ -7,5 +7,6 @@ public class ViaCepResponse
     public string Bairro { get; set; }
     public string Localidade { get; set; }
     public string Uf { get; set; }
-    public bool Erro { get; set; }
+    public string Erro { get; set; }
+    public bool IsErro => !string.IsNullOrEmpty(Erro) && Erro.Equals("true", StringComparison.OrdinalIgnoreCase);
 }

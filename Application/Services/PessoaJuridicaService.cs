@@ -1,6 +1,5 @@
 using Application.DTOs.Request;
 using Application.Interfaces;
-using Domain.Common;
 using Domain.Entities;
 using Domain.Extensions;
 using Domain.Repositories;
@@ -9,25 +8,25 @@ using Domain.ValueObjects;
 
 namespace Application.Services;
 
-public class PessoaFisicaService : IPessoaFisicaService
+public class PessoaJuridicaService : IPessoaJuridicaService
 {
-    private readonly IPessoaFisicaRepository _repository;
+    private readonly IPessoaJuridicaRepository _repository;
     private readonly IViaCepService _viaCepService;
 
-    public PessoaFisicaService(
-        IPessoaFisicaRepository repository,
+    public PessoaJuridicaService(
+        IPessoaJuridicaRepository repository,
         IViaCepService viaCepService)
     {
         _repository = repository;
         _viaCepService = viaCepService;
     }
 
-    public async Task<Guid> CreateAsync(CreatePessoaFisicaRequest request)
+    public async Task<Guid> CreateAsync(CreatePessoaJuridicaRequest request)
     {
-        var validCpf = new Cpf(request.Cpf);
+        var validCnpj = new Cnpj(request.Cnpj);
         
-        if (await _repository.CpfExisteAsync(validCpf.Numero))
-            throw new BusinessException("CPF já cadastrado.");
+        if (await _repository.CnpjExisteAsync(validCnpj.Numero))
+            throw new BusinessException("CNPJ já cadastrado.");
 
         var enderecoViaCep = await _viaCepService
             .GetEnderecoAsync(request.Cep);
@@ -41,9 +40,9 @@ public class PessoaFisicaService : IPessoaFisicaService
             enderecoViaCep.Uf
         );
 
-        var pessoa = new PessoaFisica(
-            request.Nome,
-            validCpf.Numero,
+        var pessoa = new PessoaJuridica(
+            request.RazaoSocial,
+            validCnpj.Numero,
             endereco
         );
 
@@ -52,11 +51,11 @@ public class PessoaFisicaService : IPessoaFisicaService
         return pessoa.Id;
     }
     
-    public async Task<PessoaFisica> GetByCpfAsync(string cpf)
+    public async Task<PessoaJuridica> GetByCnpjAsync(string cnpj)
     {
-        var validCpf = new Cpf(cpf);
+        var validCnpj = new Cnpj(cnpj);
         
-        var pessoa = await _repository.GetByCpfAsync(validCpf.Numero);
+        var pessoa = await _repository.GetByCnpjAsync(validCnpj.Numero);
 
         if (pessoa is null)
             throw new NotFoundException("Pessoa não encontrada.");
@@ -64,26 +63,26 @@ public class PessoaFisicaService : IPessoaFisicaService
         return pessoa;
     }
     
-    public async Task UpdateAsync(string cpf, UpdatePessoaFisicaRequest request)
+    public async Task UpdateAsync(string cnpj, UpdatePessoaJuridicaRequest request)
     {
-        var validCpf = new Cpf(cpf);
+        var validCnpj = new Cnpj(cnpj);
         
-        var pessoa = await _repository.GetByCpfAsync(validCpf.Numero);
-        
+        var pessoa = await _repository.GetByCnpjAsync(validCnpj.Numero);
+
         if (pessoa is null)
             throw new NotFoundException("Pessoa não encontrada.");
-        
-        var validUpdateCpf = new Cpf(request.Cpf);
 
-        if (validCpf.Numero != validUpdateCpf.Numero)
-        {
-            if (await _repository.CpfExisteAsync(validUpdateCpf.Numero))
-                throw new BusinessException($"Já existe um cadastro com o CPF {validUpdateCpf.Numero}");
-            
-            pessoa.AtualizarCpf(validUpdateCpf.Numero);
-        }
+        var validUpdateCnpj = new Cnpj(request.Cnpj);
         
-        pessoa.AtualizarNome(request.Nome);
+        if (validCnpj.Numero != validUpdateCnpj.Numero)
+        {
+            if (await _repository.CnpjExisteAsync(validUpdateCnpj.Numero))
+                throw new BusinessException($"Já existe um cadastro com o CNPJ {validUpdateCnpj.Numero}");
+
+            pessoa.AtualizarCnpj(validUpdateCnpj.Numero);
+        }
+
+        pessoa.AtualizarRazaoSocial(request.RazaoSocial);
 
         var enderecoViaCep = await _viaCepService.GetEnderecoAsync(request.Cep);
 
@@ -99,11 +98,11 @@ public class PessoaFisicaService : IPessoaFisicaService
         await _repository.UpdateAsync(pessoa);
     }
     
-    public async Task DeleteAsync(string cpf)
+    public async Task DeleteAsync(string cnpj)
     {
-        var validCpf = new Cpf(cpf);
+        var validCnpj = new Cnpj(cnpj);
         
-        var pessoa = await _repository.GetByCpfAsync(validCpf.Numero);
+        var pessoa = await _repository.GetByCnpjAsync(validCnpj.Numero);
 
         if (pessoa is null)
             throw new NotFoundException("Pessoa não encontrada.");

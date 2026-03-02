@@ -19,27 +19,27 @@ namespace RegisterAPI.Controllers
         public async Task<IActionResult> CreatePessoaFisica(CreatePessoaFisicaRequest request)
         {
             var id = await _service.CreateAsync(request);
-            return CreatedAtAction(nameof(CreatePessoaFisica), new { id }, new { id });
+            return Ok(new { id });
         }
         
-        [HttpGet("{cpf}")]
-        public async Task<IActionResult> GetByCpf([FromRoute] string cpf)
+        [HttpGet("buscar")]
+        public async Task<IActionResult> GetByCpf([FromQuery] string cpf)
         {
             var pessoa = await _service.GetByCpfAsync(cpf);
             return Ok(pessoa);
         }
 
-        [HttpPut("{cpf}")]
-        public async Task<IActionResult> Update( 
-            [FromRoute] string cpf,
+        [HttpPut("atualizar")]
+        public async Task<IActionResult> Update(
+            [FromQuery] string cpf,
             [FromBody] UpdatePessoaFisicaRequest request)
         {
             await _service.UpdateAsync(cpf, request);
             return NoContent();
         }
 
-        [HttpDelete("{cpf}")]
-        public async Task<IActionResult> Delete([FromRoute] string cpf)
+        [HttpDelete("deletar")]
+        public async Task<IActionResult> Delete([FromQuery] string cpf)
         {
             await _service.DeleteAsync(cpf);
             return NoContent();

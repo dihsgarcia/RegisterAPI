@@ -3,6 +3,7 @@ using Application.DTOs.Responses;
 using Application.Interfaces;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
+using Domain.Extensions;
 
 public class ViaCepService : IViaCepService
 {
@@ -19,23 +20,36 @@ public class ViaCepService : IViaCepService
 
     public async Task<ViaCepResponse> GetEnderecoAsync(string cep)
     {
-        var response = await _httpClient.GetAsync($"{_baseUrl}{cep}/json/");
+        try
+        {
+            var response = await _httpClient.GetAsync($"{_baseUrl}{cep}/json/");
 
-        if (!response.IsSuccessStatusCode)
-            throw new Exception("Erro ao consultar CEP.");
+            if (!response.IsSuccessStatusCode)
+                throw new DomainException("Erro ao consultar CEP.");
 
-        var content = await response.Content.ReadAsStringAsync();
+            var content = await response.Content.ReadAsStringAsync();
 
-        var endereco = JsonSerializer.Deserialize<ViaCepResponse>(
-            content,
-            new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var endereco = JsonSerializer.Deserialize<ViaCepResponse>(
+                content,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-        if (endereco == null || endereco.Erro)
-            throw new Exception("CEP inválido.");
+            if (endereco == null || endereco.IsErro)
+                throw new DomainException("CEP inválido.");
 
-        return endereco;
+            return endereco;
+        }
+        catch (HttpRequestException)
+        {
+            throw new DomainException("Não foi possível acessar o serviço de ViaCEP.");
+        }
+        catch (TaskCanceledException)
+        {
+            throw new DomainException("A consulta ao serviço de ViaCEP expirou.");
+        }
+        catch (JsonException)
+        {
+            throw new DomainException("Resposta inválida do serviço de CEP.");
+        }
+        
     }
 }

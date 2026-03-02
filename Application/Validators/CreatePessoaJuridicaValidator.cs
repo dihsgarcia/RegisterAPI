@@ -4,19 +4,19 @@ using Domain.Common;
 
 namespace Application.Validators;
 
-public class CreatePessoaFisicaValidator : AbstractValidator<CreatePessoaFisicaRequest>
+public class CreatePessoaJuridicaValidator : AbstractValidator<CreatePessoaJuridicaRequest>
 {
-    public CreatePessoaFisicaValidator()
+    public CreatePessoaJuridicaValidator()
     {
-        RuleFor(x => x.Nome)
+        RuleFor(x => x.RazaoSocial)
             .NotEmpty()
-            .WithMessage("Nome é obrigatório.")
+            .WithMessage("RazaoSocial é obrigatório.")
             .MaximumLength(150);
 
-        RuleFor(x => x.Cpf)
+        RuleFor(x => x.Cnpj)
             .NotEmpty()
-            .WithMessage("CPF é obrigatório.");
-        
+            .WithMessage("CNPJ é obrigatório.");
+            
         RuleFor(x => x.Cep)
             .NotEmpty()
             .WithMessage("CEP é obrigatório.");
