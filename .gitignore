@@ -1,6 +1,16 @@
-**/bin/
-**/obj/
-/packages/
-riderModule.iml
-/_ReSharper.Caches/
+# Build
+bin/
+obj/
+
+# Rider / ReSharper
 .idea/
+_ReSharper.Caches/
+*.DotSettings.user
+*.sln.DotSettings.user
+*.iml
+
+# Nuget
+packages/
+
+# OS
+.DS_Store
