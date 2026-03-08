@@ -68,7 +68,7 @@ public class PessoaJuridicaService : IPessoaJuridicaService
         var validCnpj = new Cnpj(cnpj);
         
         var pessoa = await _repository.GetByCnpjAsync(validCnpj.Numero);
-
+        
         if (pessoa is null)
             throw new NotFoundException("Pessoa não encontrada.");
 
