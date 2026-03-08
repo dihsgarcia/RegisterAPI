@@ -28,7 +28,6 @@ public class EnderecoNewConfiguration : IEntityTypeConfiguration<EnderecoNew>
             .HasMaxLength(20);
 
         builder.Property(x => x.Complemento)
-            .IsRequired()
             .HasMaxLength(100);
 
         builder.Property(x => x.Bairro)

@@ -16,6 +16,16 @@ namespace RegisterAPI.Controllers
         }
         
         [HttpPost]
+        public async Task<IActionResult> CreatePessoaFisica(CreatePessoaFisicaNewRequest request)
+        {
+
+            var teste = request;
+            
+            return Ok(request);
+        }
+        
+        
+        [HttpPost]
         public async Task<IActionResult> CreatePessoaFisica(CreatePessoaFisicaRequest request)
         {
             var id = await _service.CreateAsync(request);
