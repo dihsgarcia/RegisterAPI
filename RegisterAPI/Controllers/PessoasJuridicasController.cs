@@ -15,7 +15,7 @@ namespace RegisterAPI.Controllers
             _service = service;
         }
         
-        [HttpPost]
+        /*[HttpPost]
         public async Task<IActionResult> CreatePessoaJuridica(CreatePessoaJuridicaRequest request)
         {
             var id = await _service.CreateAsync(request);
@@ -43,6 +43,6 @@ namespace RegisterAPI.Controllers
         {
             await _service.DeleteAsync(cnpj);
             return NoContent();
-        }
+        }*/
     }
 }

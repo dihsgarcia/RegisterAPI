@@ -22,16 +22,17 @@ builder.Services.Configure<ViaCepSettings>(
     builder.Configuration.GetSection("ExternalServices"));
 
 builder.Services.AddHttpClient<IViaCepService, ViaCepService>();
-builder.Services.AddScoped<IPessoaFisicaRepository, PessoaFisicaRepository>();
 builder.Services.AddScoped<IPessoaFisicaService, PessoaFisicaService>();
-builder.Services.AddScoped<IPessoaJuridicaRepository, PessoaJuridicaRepository>();
-builder.Services.AddScoped<IPessoaJuridicaService, PessoaJuridicaService>();
+//builder.Services.AddScoped<IPessoaJuridicaService, PessoaJuridicaService>();
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 
 // Controllers
 builder.Services.AddControllers();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreatePessoaFisicaValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreatePessoaJuridicaValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateEnderecoClienteValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdatePessoaFisicaValidator>();
 builder.Services.AddFluentValidationAutoValidation();
 
 // Swagger

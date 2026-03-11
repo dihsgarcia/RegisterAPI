@@ -8,20 +8,20 @@ using Domain.ValueObjects;
 
 namespace Application.Services;
 
-public class PessoaJuridicaService : IPessoaJuridicaService
+public class PessoaJuridicaService //: IPessoaJuridicaService
 {
-    private readonly IPessoaJuridicaRepository _repository;
+    //private readonly IPessoaJuridicaRepository _repository;
     private readonly IViaCepService _viaCepService;
 
     public PessoaJuridicaService(
-        IPessoaJuridicaRepository repository,
+        //IPessoaJuridicaRepository repository,
         IViaCepService viaCepService)
     {
-        _repository = repository;
+        //_repository = repository;
         _viaCepService = viaCepService;
     }
 
-    public async Task<Guid> CreateAsync(CreatePessoaJuridicaRequest request)
+    /*public async Task<Guid> CreateAsync(CreatePessoaJuridicaRequest request)
     {
         var validCnpj = new Cnpj(request.Cnpj);
         
@@ -108,5 +108,5 @@ public class PessoaJuridicaService : IPessoaJuridicaService
             throw new NotFoundException("Pessoa não encontrada.");
 
         await _repository.DeleteAsync(pessoa);
-    }
+    }*/
 }

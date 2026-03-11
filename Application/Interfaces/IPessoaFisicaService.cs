@@ -1,4 +1,5 @@
 using Application.DTOs.Request;
+using Application.DTOs.Responses;
 using Domain.Entities;
 
 namespace Application.Interfaces;
@@ -6,7 +7,8 @@ namespace Application.Interfaces;
 public interface IPessoaFisicaService
 {
     Task<Guid> CreateAsync(CreatePessoaFisicaRequest request);
-    Task<PessoaFisica> GetByCpfAsync(string cpf);
-    Task UpdateAsync(string cpf, UpdatePessoaFisicaRequest request);
-    Task DeleteAsync(string cpf);
+    Task<PessoaFisicaResponse> GetByIdAsync(Guid id);
+    Task<PessoaFisicaResponse> GetByCpfAsync(string cpf);
+    Task UpdateAsync(UpdatePessoaFisicaRequest request);
+    Task DeleteAsync(Guid id);
 }

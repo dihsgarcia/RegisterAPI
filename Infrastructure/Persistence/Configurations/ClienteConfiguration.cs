@@ -24,15 +24,33 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
             .HasMaxLength(14);  
         
         builder.HasIndex(x => x.Documento)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("[DataExclusao] IS NULL");
 
-        builder.Property(x => x.DataCriacao);
+        builder.Property(x => x.DataCriacao)
+            .IsRequired();
+        
         builder.Property(x => x.DataAtualizacao);
         builder.Property(x => x.DataExclusao);
 
+        /*builder.HasMany(c => c.Enderecos)
+            .WithOne(e => e.Cliente)
+            .HasForeignKey(e => e.ClienteId)
+            .OnDelete(DeleteBehavior.Cascade);*/
+        
         builder.HasMany(c => c.Enderecos)
-            .WithOne()
+            .WithOne(e => e.Cliente)
             .HasForeignKey(e => e.ClienteId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        /*builder.Navigation(c => c.Enderecos)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);*/
+        
+        builder.Metadata
+            .FindNavigation(nameof(Cliente.Enderecos))
+            ?.SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Navigation(c => c.Enderecos)
+            .HasField("_enderecos");
     }
 }

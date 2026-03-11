@@ -1,6 +1,5 @@
-using FluentValidation;
 using Application.DTOs.Request;
-using Domain.Common;
+using FluentValidation;
 
 namespace Application.Validators;
 
@@ -11,18 +10,19 @@ public class CreatePessoaFisicaValidator : AbstractValidator<CreatePessoaFisicaR
         RuleFor(x => x.Nome)
             .NotEmpty()
             .WithMessage("Nome é obrigatório.")
-            .MaximumLength(150);
+            .MaximumLength(200);
 
         RuleFor(x => x.Cpf)
             .NotEmpty()
             .WithMessage("CPF é obrigatório.");
         
-        RuleFor(x => x.Cep)
-            .NotEmpty()
-            .WithMessage("CEP é obrigatório.");
-
-        RuleFor(x => x.NumeroEndereco)
-            .NotEmpty()
-            .WithMessage("Número do endereço é obrigatório.");
+        RuleFor(x => x.Enderecos)
+            .NotNull()
+            .WithMessage("Ao menos um registro de endereço é obrigatório.")
+            .Must(x => x.Any())
+            .WithMessage("Ao menos um registro de endereço é obrigatório.");
+        
+        RuleForEach(x => x.Enderecos)
+            .SetValidator(new CreateEnderecoClienteValidator());
     }
 }

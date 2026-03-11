@@ -11,6 +11,12 @@ public class EnderecoConfiguration : IEntityTypeConfiguration<Endereco>
         builder.ToTable("Enderecos");
 
         builder.HasKey(x => x.Id);
+        
+        builder.Property(e => e.Id)
+            .ValueGeneratedOnAdd();
+        
+        builder.Property(x => x.ClienteId)
+            .IsRequired();
 
         builder.Property(x => x.Cep)
             .IsRequired()
@@ -24,6 +30,9 @@ public class EnderecoConfiguration : IEntityTypeConfiguration<Endereco>
             .IsRequired()
             .HasMaxLength(20);
 
+        builder.Property(x => x.Complemento)
+            .HasMaxLength(100);
+
         builder.Property(x => x.Bairro)
             .IsRequired()
             .HasMaxLength(150);
@@ -35,5 +44,7 @@ public class EnderecoConfiguration : IEntityTypeConfiguration<Endereco>
         builder.Property(x => x.Estado)
             .IsRequired()
             .HasMaxLength(2);
+
+        builder.HasIndex(x => x.ClienteId);
     }
 }

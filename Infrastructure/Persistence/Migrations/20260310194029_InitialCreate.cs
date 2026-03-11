@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AddClienteEEnderecoNew : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -29,7 +29,7 @@ namespace Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "EnderecosNew",
+                name: "Enderecos",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -40,16 +40,13 @@ namespace Infrastructure.Persistence.Migrations
                     Complemento = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     Bairro = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     Cidade = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    Estado = table.Column<string>(type: "nvarchar(2)", maxLength: 2, nullable: false),
-                    DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DataAtualizacao = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    DataExclusao = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Estado = table.Column<string>(type: "nvarchar(2)", maxLength: 2, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EnderecosNew", x => x.Id);
+                    table.PrimaryKey("PK_Enderecos", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_EnderecosNew_Clientes_ClienteId",
+                        name: "FK_Enderecos_Clientes_ClienteId",
                         column: x => x.ClienteId,
                         principalTable: "Clientes",
                         principalColumn: "ClienteId",
@@ -60,11 +57,12 @@ namespace Infrastructure.Persistence.Migrations
                 name: "IX_Clientes_Documento",
                 table: "Clientes",
                 column: "Documento",
-                unique: true);
+                unique: true,
+                filter: "[DataExclusao] IS NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EnderecosNew_ClienteId",
-                table: "EnderecosNew",
+                name: "IX_Enderecos_ClienteId",
+                table: "Enderecos",
                 column: "ClienteId");
         }
 
@@ -72,7 +70,7 @@ namespace Infrastructure.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "EnderecosNew");
+                name: "Enderecos");
 
             migrationBuilder.DropTable(
                 name: "Clientes");

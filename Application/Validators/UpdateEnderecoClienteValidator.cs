@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace Application.Validators;
 
-public class CreateEnderecoPessoaValidator : AbstractValidator<CreateEnderecoPessoa>
+public class UpdateEnderecoClienteValidator : AbstractValidator<UpdateEnderecoRequest>
 {
-    public CreateEnderecoPessoaValidator()
+    public UpdateEnderecoClienteValidator()
     {
         RuleFor(x => x.Cep)
             .NotEmpty()

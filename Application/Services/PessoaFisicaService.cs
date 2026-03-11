@@ -1,6 +1,7 @@
 using Application.DTOs.Request;
+using Application.DTOs.Responses;
 using Application.Interfaces;
-using Domain.Common;
+using Application.Mappers;
 using Domain.Entities;
 using Domain.Extensions;
 using Domain.Repositories;
@@ -11,103 +12,137 @@ namespace Application.Services;
 
 public class PessoaFisicaService : IPessoaFisicaService
 {
-    private readonly IPessoaFisicaRepository _repository;
+    private readonly IClienteRepository _clienteRepository;
     private readonly IViaCepService _viaCepService;
 
     public PessoaFisicaService(
-        IPessoaFisicaRepository repository,
+        IClienteRepository clienteRepository,
         IViaCepService viaCepService)
     {
-        _repository = repository;
+        _clienteRepository = clienteRepository;
         _viaCepService = viaCepService;
     }
 
     public async Task<Guid> CreateAsync(CreatePessoaFisicaRequest request)
     {
-        var validCpf = new Cpf(request.Cpf);
+        var normalizeCpfReq = new Cpf(request.Cpf);
         
-        if (await _repository.CpfExisteAsync(validCpf.Numero))
-            throw new BusinessException("CPF já cadastrado.");
-
-        var enderecoViaCep = await _viaCepService
-            .GetEnderecoAsync(request.Cep);
-
-        var endereco = new Endereco(
-            enderecoViaCep.Cep,
-            enderecoViaCep.Logradouro,
-            request.NumeroEndereco, 
-            enderecoViaCep.Bairro,
-            enderecoViaCep.Localidade,
-            enderecoViaCep.Uf
-        );
-
-        var pessoa = new PessoaFisica(
+        if (await _clienteRepository.GetByDocumentoAsync(normalizeCpfReq.Number) != null)
+            throw new BusinessException($"CPF: {normalizeCpfReq.Number} já cadastrado.");
+        
+        var cliente = new Cliente(
             request.Nome,
-            validCpf.Numero,
-            endereco
+            null,
+            normalizeCpfReq.Number
         );
-
-        await _repository.AddAsync(pessoa);
-
-        return pessoa.Id;
-    }
-    
-    public async Task<PessoaFisica> GetByCpfAsync(string cpf)
-    {
-        var validCpf = new Cpf(cpf);
         
-        var pessoa = await _repository.GetByCpfAsync(validCpf.Numero);
-
-        if (pessoa is null)
-            throw new NotFoundException("Pessoa não encontrada.");
-
-        return pessoa;
-    }
-    
-    public async Task UpdateAsync(string cpf, UpdatePessoaFisicaRequest request)
-    {
-        var validCpf = new Cpf(cpf);
-        
-        var pessoa = await _repository.GetByCpfAsync(validCpf.Numero);
-        
-        if (pessoa is null)
-            throw new NotFoundException("Pessoa não encontrada.");
-        
-        var validUpdateCpf = new Cpf(request.Cpf);
-
-        if (validCpf.Numero != validUpdateCpf.Numero)
+        foreach (var enderecoReq in request.Enderecos)
         {
-            if (await _repository.CpfExisteAsync(validUpdateCpf.Numero))
-                throw new BusinessException($"Já existe um cadastro com o CPF {validUpdateCpf.Numero}");
+            var viaCepResponse = await _viaCepService.GetEnderecoAsync(enderecoReq.Cep);
+
+            if (viaCepResponse.IsErro)
+                throw new BusinessException($"CEP: {enderecoReq.Cep} inválido ou não encontrado.");
             
-            pessoa.AtualizarCpf(validUpdateCpf.Numero);
+            var endereco = new Endereco(
+                viaCepResponse.Cep,
+                viaCepResponse.Logradouro,
+                enderecoReq.NumeroEndereco,
+                enderecoReq.Complemento,
+                viaCepResponse.Bairro,
+                viaCepResponse.Localidade,
+                viaCepResponse.Uf);
+            
+            cliente.AddEndereco(endereco);
         }
         
-        pessoa.AtualizarNome(request.Nome);
+        await _clienteRepository.AddAsync(cliente);
 
-        var enderecoViaCep = await _viaCepService.GetEnderecoAsync(request.Cep);
-
-        pessoa.AtualizarEndereco(
-            enderecoViaCep.Cep,
-            enderecoViaCep.Logradouro,
-            request.NumeroEndereco,
-            enderecoViaCep.Bairro,
-            enderecoViaCep.Localidade,
-            enderecoViaCep.Uf
-        );
-
-        await _repository.UpdateAsync(pessoa);
+        return cliente.ClienteId;
     }
     
-    public async Task DeleteAsync(string cpf)
+    public async Task<PessoaFisicaResponse> GetByCpfAsync(string cpf)
     {
-        var validCpf = new Cpf(cpf);
+        var normalizeCpfReq = new Cpf(cpf);
+
+        var cliente = await _clienteRepository.GetByDocumentoAsync(normalizeCpfReq.Number);
+
+        if (cliente is null)
+            throw new NotFoundException($"Registro para o CPF: {normalizeCpfReq.Number} não encontrado.");
+
+        return PessoaFisicaMapper.ToResponse(cliente);
+    }
+    
+    public async Task<PessoaFisicaResponse> GetByIdAsync(Guid id)
+    {
+        var cliente = await _clienteRepository.GetByIdAsync(id);
+
+        if (cliente is null)
+            throw new NotFoundException($"Registro para o Id: {id} não encontrado.");
+
+        return PessoaFisicaMapper.ToResponse(cliente);
+    }
+
+    public async Task UpdateAsync(UpdatePessoaFisicaRequest request)
+    {
+        var cliente = await _clienteRepository.GetByIdAsync(request.Id);
+
+        if (cliente is null)
+            throw new NotFoundException($"Registro para o Id: {request.Id} não encontrado.");
+
+        var normalizeCpfReq = new Cpf(request.Cpf);
+
+        if (normalizeCpfReq.Number != cliente.Documento)
+        {
+            if (await _clienteRepository.GetByDocumentoAsync(normalizeCpfReq.Number) != null)
+                throw new BusinessException($"Já existe um cadastro com o CPF: {normalizeCpfReq.Number}.");
+        }
         
-        var pessoa = await _repository.GetByCpfAsync(validCpf.Numero);
+        cliente.Update(request.Nome, null,normalizeCpfReq.Number);
+        
+        foreach (var enderecoReq in request.Enderecos)
+        {
+            var viaCepResponse = await _viaCepService.GetEnderecoAsync(enderecoReq.Cep);
 
-        if (pessoa is null)
-            throw new NotFoundException("Pessoa não encontrada.");
+            if (viaCepResponse.IsErro)
+                throw new BusinessException($"CEP: {enderecoReq.Cep} inválido ou não encontrado.");
 
-        await _repository.DeleteAsync(pessoa);
+            if (enderecoReq.Id == null)
+            {
+                var endereco = new Endereco(
+                    viaCepResponse.Cep,
+                    viaCepResponse.Logradouro,
+                    enderecoReq.NumeroEndereco,
+                    enderecoReq.Complemento,
+                    viaCepResponse.Bairro,
+                    viaCepResponse.Localidade,
+                    viaCepResponse.Uf);
+                
+                cliente.AddEndereco(endereco);
+            }
+            else
+            {
+                cliente.UpdateEndereco(
+                    enderecoReq.Id.Value,
+                    viaCepResponse.Cep,
+                    viaCepResponse.Logradouro,
+                    enderecoReq.NumeroEndereco,
+                    enderecoReq.Complemento,
+                    viaCepResponse.Bairro,
+                    viaCepResponse.Localidade,
+                    viaCepResponse.Uf);
+            }
+        }
+        
+        await _clienteRepository.UpdateAsync(cliente);
+    }
+    
+    public async Task DeleteAsync(Guid id)
+    {
+        var cliente = await _clienteRepository.GetByIdAsync(id);
+
+        if (cliente is null)
+            throw new NotFoundException($"Registro para o Id: {id} não encontrado.");
+
+        await _clienteRepository.DeleteAsync(cliente);
     }
 }

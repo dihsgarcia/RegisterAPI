@@ -5,17 +5,17 @@ namespace Domain.ValueObjects;
 
 public sealed class Cpf
 {
-    public string Numero { get; }
+    public string Number { get; }
 
-    public Cpf(string numero)
+    public Cpf(string number)
     {
-        numero = CpfUtils.Limpar(numero);
+        number = CpfUtils.Limpar(number);
 
-        if (!CpfUtils.EhValido(numero))
+        if (!CpfUtils.EhValido(number))
             throw new DomainException("CPF inválido.");
 
-        Numero = numero;
+        Number = number;
     }
 
-    public override string ToString() => Numero;
+    public override string ToString() => Number;
 }

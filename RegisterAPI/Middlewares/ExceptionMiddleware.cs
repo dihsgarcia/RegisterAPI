@@ -31,8 +31,10 @@ public class ExceptionMiddleware
         {
             await HandleExceptionAsync(context, HttpStatusCode.BadRequest, ex.Message);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            var teste = ex.Message;
+            
             await HandleExceptionAsync(context,
                 HttpStatusCode.InternalServerError,
                 "Erro interno no servidor.");
