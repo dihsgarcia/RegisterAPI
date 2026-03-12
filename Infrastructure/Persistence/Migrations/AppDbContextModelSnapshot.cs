@@ -25,7 +25,6 @@ namespace Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.Cliente", b =>
                 {
                     b.Property<Guid>("ClienteId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("DataAtualizacao")
@@ -39,17 +38,18 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Documento")
                         .IsRequired()
-                        .HasMaxLength(14)
-                        .HasColumnType("nvarchar(14)");
+                        .HasMaxLength(18)
+                        .HasColumnType("nvarchar(18)");
 
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("RazaoSocial")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                    b.Property<string>("TipoCliente")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
 
                     b.HasKey("ClienteId");
 
@@ -58,6 +58,10 @@ namespace Infrastructure.Persistence.Migrations
                         .HasFilter("[DataExclusao] IS NULL");
 
                     b.ToTable("Clientes", (string)null);
+
+                    b.HasDiscriminator<string>("TipoCliente").HasValue("Cliente");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("Domain.Entities.Endereco", b =>
@@ -108,6 +112,25 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasIndex("ClienteId");
 
                     b.ToTable("Enderecos", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.PessoaFisica", b =>
+                {
+                    b.HasBaseType("Domain.Entities.Cliente");
+
+                    b.HasDiscriminator().HasValue("PF");
+                });
+
+            modelBuilder.Entity("Domain.Entities.PessoaJuridica", b =>
+                {
+                    b.HasBaseType("Domain.Entities.Cliente");
+
+                    b.Property<string>("RazaoSocial")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasDiscriminator().HasValue("PJ");
                 });
 
             modelBuilder.Entity("Domain.Entities.Endereco", b =>

@@ -5,7 +5,7 @@ namespace Application.Mappers;
 
 public static class PessoaFisicaMapper
 {
-    public static PessoaFisicaResponse ToResponse(Cliente cliente)
+    public static PessoaFisicaResponse ToResponse(PessoaFisica cliente)
     {
         return new PessoaFisicaResponse
         {

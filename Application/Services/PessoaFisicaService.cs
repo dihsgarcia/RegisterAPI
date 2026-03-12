@@ -27,12 +27,11 @@ public class PessoaFisicaService : IPessoaFisicaService
     {
         var normalizeCpfReq = new Cpf(request.Cpf);
 
-        if (await _clienteRepository.GetByDocumentoAsync(normalizeCpfReq.Number) != null)
+        if (await _clienteRepository.GetPessoaFisicaByCpfAsync(normalizeCpfReq.Number) != null)
             throw new BusinessException($"CPF: {normalizeCpfReq.Number} já cadastrado.");
 
-        var cliente = new Cliente(
+        var cliente = new PessoaFisica(
             request.Nome,
-            null,
             normalizeCpfReq.Number
         );
 
@@ -64,7 +63,7 @@ public class PessoaFisicaService : IPessoaFisicaService
     {
         var normalizeCpfReq = new Cpf(cpf);
 
-        var cliente = await _clienteRepository.GetByDocumentoAsync(normalizeCpfReq.Number);
+        var cliente = await _clienteRepository.GetPessoaFisicaByCpfAsync(normalizeCpfReq.Number);
 
         if (cliente is null)
             throw new NotFoundException($"Registro para o CPF: {normalizeCpfReq.Number} não encontrado.");
@@ -74,7 +73,7 @@ public class PessoaFisicaService : IPessoaFisicaService
 
     public async Task<PessoaFisicaResponse> GetByIdAsync(Guid clienteId)
     {
-        var cliente = await _clienteRepository.GetByIdAsync(clienteId);
+        var cliente = await _clienteRepository.GetPessoaFisicaByIdAsync(clienteId);
 
         if (cliente is null)
             throw new NotFoundException($"Registro para o ClienteId: {clienteId} não encontrado.");
@@ -84,7 +83,7 @@ public class PessoaFisicaService : IPessoaFisicaService
 
     public async Task UpdateAsync(UpdatePessoaFisicaRequest request)
     {
-        var cliente = await _clienteRepository.GetByIdAsync(request.ClienteId);
+        var cliente = await _clienteRepository.GetPessoaFisicaByIdAsync(request.ClienteId);
 
         if (cliente is null)
             throw new NotFoundException($"Registro para o ClienteId: {request.ClienteId} não encontrado.");
@@ -93,11 +92,11 @@ public class PessoaFisicaService : IPessoaFisicaService
 
         if (normalizeCpfReq.Number != cliente.Documento)
         {
-            if (await _clienteRepository.GetByDocumentoAsync(normalizeCpfReq.Number) != null)
+            if (await _clienteRepository.GetPessoaFisicaByCpfAsync(normalizeCpfReq.Number) != null)
                 throw new BusinessException($"Já existe um cadastro com o CPF: {normalizeCpfReq.Number}.");
         }
 
-        cliente.Update(request.Nome, null, normalizeCpfReq.Number);
+        cliente.Update(request.Nome, normalizeCpfReq.Number);
 
         foreach (var enderecoReq in request.Enderecos)
         {
@@ -138,7 +137,7 @@ public class PessoaFisicaService : IPessoaFisicaService
 
     public async Task DeleteAsync(Guid clienteId)
     {
-        var cliente = await _clienteRepository.GetByIdAsync(clienteId);
+        var cliente = await _clienteRepository.GetPessoaFisicaByIdAsync(clienteId);
 
         if (cliente is null)
             throw new NotFoundException($"Registro para o ClienteId: {clienteId} não encontrado.");

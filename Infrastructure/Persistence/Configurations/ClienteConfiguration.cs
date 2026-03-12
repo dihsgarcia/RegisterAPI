@@ -12,37 +12,38 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
 
         builder.HasKey(x => x.ClienteId);
 
-        builder.Property(x => x.Nome)
-            .IsRequired()
-            .HasMaxLength(200);
-
-        builder.Property(x => x.RazaoSocial)
-            .HasMaxLength(200);
+        builder.Property(x => x.ClienteId)
+            .ValueGeneratedNever();
 
         builder.Property(x => x.Documento)
             .IsRequired()
-            .HasMaxLength(14);  
-        
+            .HasMaxLength(18);
+
         builder.HasIndex(x => x.Documento)
             .IsUnique()
             .HasFilter("[DataExclusao] IS NULL");
 
         builder.Property(x => x.DataCriacao)
             .IsRequired();
-        
+
         builder.Property(x => x.DataAtualizacao);
+
         builder.Property(x => x.DataExclusao);
-        
+
+        builder.HasDiscriminator<string>("TipoCliente")
+            .HasValue<PessoaFisica>("PF")
+            .HasValue<PessoaJuridica>("PJ");
+
         builder.HasMany(c => c.Enderecos)
             .WithOne(e => e.Cliente)
             .HasForeignKey(e => e.ClienteId)
             .OnDelete(DeleteBehavior.Cascade);
-        
+
         builder.Metadata
             .FindNavigation(nameof(Cliente.Enderecos))
             ?.SetPropertyAccessMode(PropertyAccessMode.Field);
 
-        builder.Navigation(c => c.Enderecos)
+        builder.Navigation(nameof(Cliente.Enderecos))
             .HasField("_enderecos");
     }
 }

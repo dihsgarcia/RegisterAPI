@@ -27,10 +27,10 @@ public class PessoaJuridicaService : IPessoaJuridicaService
     {
         var normalizeCnpjReq = new Cnpj(request.Cnpj);
         
-        if (await _clienteRepository.GetByDocumentoAsync(normalizeCnpjReq.Number) != null)
+        if (await _clienteRepository.GetPessoaJuridicaByCnpjAsync(normalizeCnpjReq.Number) != null)
             throw new BusinessException($"CNPJ: {normalizeCnpjReq.Number} já cadastrado.");
         
-        var cliente = new Cliente(
+        var cliente = new PessoaJuridica(
             request.Nome,
             request.RazaoSocial,
             normalizeCnpjReq.Number
@@ -64,7 +64,7 @@ public class PessoaJuridicaService : IPessoaJuridicaService
     {
         var normalizeCnpjReq = new Cnpj(cnpj);
 
-        var cliente = await _clienteRepository.GetByDocumentoAsync(normalizeCnpjReq.Number);
+        var cliente = await _clienteRepository.GetPessoaJuridicaByCnpjAsync(normalizeCnpjReq.Number);
 
         if (cliente is null)
             throw new NotFoundException($"Registro para o CNPJ: {normalizeCnpjReq.Number} não encontrado.");
@@ -74,7 +74,7 @@ public class PessoaJuridicaService : IPessoaJuridicaService
     
     public async Task<PessoaJuridicaResponse> GetByIdAsync(Guid clienteId)
     {
-        var cliente = await _clienteRepository.GetByIdAsync(clienteId);
+        var cliente = await _clienteRepository.GetPessoaJuridicaByIdAsync(clienteId);
 
         if (cliente is null)
             throw new NotFoundException($"Registro para o ClienteId: {clienteId} não encontrado.");
@@ -84,7 +84,7 @@ public class PessoaJuridicaService : IPessoaJuridicaService
 
     public async Task UpdateAsync(UpdatePessoaJuridicaRequest request)
     {
-        var cliente = await _clienteRepository.GetByIdAsync(request.ClienteId);
+        var cliente = await _clienteRepository.GetPessoaJuridicaByIdAsync(request.ClienteId);
 
         if (cliente is null)
             throw new NotFoundException($"Registro para o ClienteId: {request.ClienteId} não encontrado.");
@@ -93,7 +93,7 @@ public class PessoaJuridicaService : IPessoaJuridicaService
 
         if (normalizeCnpjReq.Number != cliente.Documento)
         {
-            if (await _clienteRepository.GetByDocumentoAsync(normalizeCnpjReq.Number) != null)
+            if (await _clienteRepository.GetPessoaJuridicaByCnpjAsync(normalizeCnpjReq.Number) != null)
                 throw new BusinessException($"Já existe um cadastro com o CNPJ: {normalizeCnpjReq.Number}.");
         }
         
@@ -138,7 +138,7 @@ public class PessoaJuridicaService : IPessoaJuridicaService
     
     public async Task DeleteAsync(Guid clienteId)
     {
-        var cliente = await _clienteRepository.GetByIdAsync(clienteId);
+        var cliente = await _clienteRepository.GetPessoaJuridicaByIdAsync(clienteId);
 
         if (cliente is null)
             throw new NotFoundException($"Registro para o ClienteId: {clienteId} não encontrado.");

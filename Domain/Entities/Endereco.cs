@@ -12,7 +12,7 @@ public class Endereco
     public string Cidade { get; private set; }
     public string Estado { get; private set; }
 
-    public Cliente Cliente { get; private set; }
+    public Cliente Cliente { get; private set; } = null!;
 
     private Endereco() { }
 

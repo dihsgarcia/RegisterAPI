@@ -5,8 +5,14 @@ namespace Infrastructure.Persistence;
 
 public class AppDbContext : DbContext
 {
-    public DbSet<Endereco> Enderecos => Set<Endereco>();
     public DbSet<Cliente> Clientes => Set<Cliente>();
+
+    public DbSet<PessoaFisica> PessoasFisicas => Set<PessoaFisica>();
+
+    public DbSet<PessoaJuridica> PessoasJuridicas => Set<PessoaJuridica>();
+
+    public DbSet<Endereco> Enderecos => Set<Endereco>();
+
     
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)

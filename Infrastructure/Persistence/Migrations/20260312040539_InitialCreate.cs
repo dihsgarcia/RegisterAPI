@@ -17,11 +17,12 @@ namespace Infrastructure.Persistence.Migrations
                 {
                     ClienteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Nome = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    RazaoSocial = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    Documento = table.Column<string>(type: "nvarchar(14)", maxLength: 14, nullable: false),
+                    Documento = table.Column<string>(type: "nvarchar(18)", maxLength: 18, nullable: false),
                     DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DataAtualizacao = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    DataExclusao = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    DataExclusao = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    TipoCliente = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
+                    RazaoSocial = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true)
                 },
                 constraints: table =>
                 {

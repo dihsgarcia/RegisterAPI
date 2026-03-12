@@ -20,31 +20,50 @@ public class ClienteRepository : IClienteRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<Cliente?> GetByIdAsync(Guid clienteId)
+    public async Task<PessoaFisica?> GetPessoaFisicaByIdAsync(Guid clienteId)
     {
-        return await _context.Clientes
-            .Include(c => c.Enderecos)
-            .FirstOrDefaultAsync(c => c.ClienteId == clienteId && c.DataExclusao == null);
+        return await _context.PessoasFisicas
+            .Include(x => x.Enderecos)
+            .FirstOrDefaultAsync(x =>
+                x.ClienteId == clienteId &&
+                x.DataExclusao == null);
     }
 
-    public async Task<Cliente?> GetByDocumentoAsync(string documento)
+    public async Task<PessoaJuridica?> GetPessoaJuridicaByIdAsync(Guid clienteId)
     {
-        return await _context.Clientes
-            .Include(c => c.Enderecos)
-            .FirstOrDefaultAsync(c => c.Documento == documento && c.DataExclusao == null);
+        return await _context.PessoasJuridicas
+            .Include(x => x.Enderecos)
+            .FirstOrDefaultAsync(x =>
+                x.ClienteId == clienteId &&
+                x.DataExclusao == null);
     }
 
-    
+    public async Task<PessoaFisica?> GetPessoaFisicaByCpfAsync(string cpf)
+    {
+        return await _context.PessoasFisicas
+            .Include(x => x.Enderecos)
+            .FirstOrDefaultAsync(x =>
+                x.Documento == cpf &&
+                x.DataExclusao == null);
+    }
+
+    public async Task<PessoaJuridica?> GetPessoaJuridicaByCnpjAsync(string cnpj)
+    {
+        return await _context.PessoasJuridicas
+            .Include(x => x.Enderecos)
+            .FirstOrDefaultAsync(x =>
+                x.Documento == cnpj &&
+                x.DataExclusao == null);
+    }
+
     public async Task UpdateAsync(Cliente cliente)
     {
-        var teste = _context.ChangeTracker.Entries<Endereco>();
         await _context.SaveChangesAsync();
     }
-    
+
     public async Task DeleteAsync(Cliente cliente)
     {
         cliente.SoftDelete();
-        _context.Clientes.Update(cliente);
         await _context.SaveChangesAsync();
     }
 }

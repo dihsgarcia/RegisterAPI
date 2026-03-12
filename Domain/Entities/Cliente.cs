@@ -2,41 +2,31 @@ using Domain.Extensions;
 
 namespace Domain.Entities;
 
-public class Cliente
+public abstract class Cliente
 {
-    public Guid ClienteId { get; private set; }
-    public string Nome { get; private set; }
-    public string? RazaoSocial{ get; private set; }
-    public string Documento { get; private set; }
-    
+    public Guid ClienteId { get; protected set; }
+    public string Nome { get; protected set; }
+    public string Documento { get; protected set; }
+
     private List<Endereco> _enderecos = new();
     public IReadOnlyCollection<Endereco> Enderecos => _enderecos;
-    
-    public DateTime DataCriacao { get; private set; }
-    
-    public DateTime? DataAtualizacao { get; private set;}
-    
-    public DateTime? DataExclusao { get; private set; }
-    
-    private Cliente() { }
-    
-    public Cliente( string nome, string? razaoSocial, string documento )
+
+    public DateTime DataCriacao { get; protected set; }
+    public DateTime? DataAtualizacao { get; protected set; }
+    public DateTime? DataExclusao { get; protected set; }
+
+    protected Cliente()
+    {
+    }
+
+    protected Cliente(string nome, string documento)
     {
         ClienteId = Guid.NewGuid();
         Nome = nome;
-        RazaoSocial = razaoSocial;
         Documento = documento;
         DataCriacao = DateTime.UtcNow;
     }
-    
-    public void Update(string nome, string? razaoSocial, string documento)
-    {
-        Nome = nome;
-        RazaoSocial = razaoSocial;
-        Documento = documento;
-        DataAtualizacao = DateTime.UtcNow;
-    }
-    
+
     public void SoftDelete()
     {
         DataExclusao = DateTime.UtcNow;
@@ -47,7 +37,7 @@ public class Cliente
         endereco.SetClienteId(ClienteId);
         _enderecos.Add(endereco);
     }
-    
+
     public void UpdateEndereco(
         Guid enderecoId,
         string cep,
@@ -72,13 +62,4 @@ public class Cliente
             cidade,
             estado);
     }
-    
-    public void RemoveEndereco(Guid enderecoId)
-    {
-        var endereco = _enderecos.FirstOrDefault(e => e.EnderecoId == enderecoId);
-
-        if (endereco != null)
-            _enderecos.Remove(endereco);
-    }
-    
 }
