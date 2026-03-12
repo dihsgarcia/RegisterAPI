@@ -1,4 +1,3 @@
-using Application.Configurations;
 using Application.Interfaces;
 using Application.Services;
 using Application.Validators;
@@ -10,6 +9,9 @@ using Microsoft.OpenApi;
 using RegisterAPI.Middlewares;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Infrastructure.Integrations.Cep;
+using Infrastructure.Settings;
+using Microsoft.Extensions.Http.Resilience;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,9 +23,23 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.Configure<ViaCepSettings>(
     builder.Configuration.GetSection("ExternalServices"));
 
-builder.Services.AddHttpClient<IViaCepService, ViaCepService>();
+//Retry Policy
+builder.Services
+    .AddHttpClient<ViaCepProvider>()
+    .AddStandardResilienceHandler(options =>
+    {
+        options.Retry.MaxRetryAttempts = 3;
+        options.Retry.Delay = TimeSpan.FromSeconds(2);
+
+        options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+    });
+
+builder.Services.AddScoped<ICepProvider, ViaCepProvider>();
+builder.Services.AddScoped<ICepService, CepService>();
+
 builder.Services.AddScoped<IPessoaFisicaService, PessoaFisicaService>();
 builder.Services.AddScoped<IPessoaJuridicaService, PessoaJuridicaService>();
+
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 
 // Controllers
@@ -36,6 +52,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreateEnderecoClienteValida
 builder.Services.AddValidatorsFromAssemblyContaining<UpdatePessoaFisicaValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpdatePessoaJuridicaValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpdateEnderecoClienteValidator>();
+
 builder.Services.AddFluentValidationAutoValidation();
 
 // Swagger

@@ -13,14 +13,14 @@ namespace Application.Services;
 public class PessoaFisicaService : IPessoaFisicaService
 {
     private readonly IClienteRepository _clienteRepository;
-    private readonly IViaCepService _viaCepService;
+    private readonly ICepService _cepService;
 
     public PessoaFisicaService(
         IClienteRepository clienteRepository,
-        IViaCepService viaCepService)
+        ICepService cepService)
     {
         _clienteRepository = clienteRepository;
-        _viaCepService = viaCepService;
+        _cepService = cepService;
     }
 
     public async Task<Guid> CreateAsync(CreatePessoaFisicaRequest request)
@@ -37,19 +37,19 @@ public class PessoaFisicaService : IPessoaFisicaService
 
         foreach (var enderecoReq in request.Enderecos)
         {
-            var viaCepResponse = await _viaCepService.GetEnderecoAsync(enderecoReq.Cep);
+            var cepResponse = await _cepService.GetEnderecoAsync(enderecoReq.Cep);
 
-            if (viaCepResponse.IsErro)
+            if (cepResponse is null)
                 throw new BusinessException($"CEP: {enderecoReq.Cep} inválido ou não encontrado.");
 
             var endereco = new Endereco(
-                viaCepResponse.Cep,
-                viaCepResponse.Logradouro,
+                cepResponse.Cep,
+                cepResponse.Logradouro,
                 enderecoReq.NumeroEndereco,
                 enderecoReq.Complemento,
-                viaCepResponse.Bairro,
-                viaCepResponse.Localidade,
-                viaCepResponse.Uf);
+                cepResponse.Bairro,
+                cepResponse.Cidade,
+                cepResponse.Estado);
 
             cliente.AddEndereco(endereco);
         }
@@ -100,21 +100,21 @@ public class PessoaFisicaService : IPessoaFisicaService
 
         foreach (var enderecoReq in request.Enderecos)
         {
-            var viaCepResponse = await _viaCepService.GetEnderecoAsync(enderecoReq.Cep);
+            var cepResponse = await _cepService.GetEnderecoAsync(enderecoReq.Cep);
 
-            if (viaCepResponse.IsErro)
+            if (cepResponse is null)
                 throw new BusinessException($"CEP: {enderecoReq.Cep} inválido ou não encontrado.");
 
             if (enderecoReq.EnderecoId == null)
             {
                 var endereco = new Endereco(
-                    viaCepResponse.Cep,
-                    viaCepResponse.Logradouro,
+                    cepResponse.Cep,
+                    cepResponse.Logradouro,
                     enderecoReq.NumeroEndereco,
                     enderecoReq.Complemento,
-                    viaCepResponse.Bairro,
-                    viaCepResponse.Localidade,
-                    viaCepResponse.Uf);
+                    cepResponse.Bairro,
+                    cepResponse.Cidade,
+                    cepResponse.Estado);
 
                 cliente.AddEndereco(endereco);
             }
@@ -122,13 +122,13 @@ public class PessoaFisicaService : IPessoaFisicaService
             {
                 cliente.UpdateEndereco(
                     enderecoReq.EnderecoId.Value,
-                    viaCepResponse.Cep,
-                    viaCepResponse.Logradouro,
+                    cepResponse.Cep,
+                    cepResponse.Logradouro,
                     enderecoReq.NumeroEndereco,
                     enderecoReq.Complemento,
-                    viaCepResponse.Bairro,
-                    viaCepResponse.Localidade,
-                    viaCepResponse.Uf);
+                    cepResponse.Bairro,
+                    cepResponse.Cidade,
+                    cepResponse.Estado);
             }
         }
 
