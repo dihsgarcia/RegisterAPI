@@ -58,10 +58,10 @@ public class Cliente
         string cidade,
         string estado)
     {
-        var endereco = _enderecos.FirstOrDefault(e => e.Id == enderecoId);
+        var endereco = _enderecos.FirstOrDefault(e => e.EnderecoId == enderecoId);
 
         if (endereco == null)
-            throw new DomainException($"Endereço não pertence ao cliente.");
+            throw new DomainException($"EnderecoId: {enderecoId} não encontrado.");
 
         endereco.Update(
             cep,
@@ -75,7 +75,7 @@ public class Cliente
     
     public void RemoveEndereco(Guid enderecoId)
     {
-        var endereco = _enderecos.FirstOrDefault(e => e.Id == enderecoId);
+        var endereco = _enderecos.FirstOrDefault(e => e.EnderecoId == enderecoId);
 
         if (endereco != null)
             _enderecos.Remove(endereco);

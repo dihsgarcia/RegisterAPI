@@ -2,7 +2,7 @@ namespace Domain.Entities;
 
 public class Endereco
 {
-    public Guid Id { get; private set; }
+    public Guid EnderecoId { get; private set; }
     public Guid ClienteId { get; private set; }
     public string Cep { get; private set; }
     public string Logradouro { get; private set; }

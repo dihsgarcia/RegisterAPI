@@ -2,7 +2,7 @@ namespace Application.DTOs.Responses;
 
 public class EnderecoResponse
 {
-    public Guid Id { get; set; }
+    public Guid EnderecoId { get; set; }
     public Guid ClienteId { get; set; }
     public string Cep { get; set; }
     public string Logradouro { get; set; }

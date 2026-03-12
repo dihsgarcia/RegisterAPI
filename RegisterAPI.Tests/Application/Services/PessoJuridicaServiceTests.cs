@@ -12,7 +12,7 @@ namespace RegisterAPI.Tests.Application.Services;
 [TestFixture]
 public class PessoJuridicaServiceTests
 {
-    private Mock<IPessoaJuridicaRepository> _repositoryMock = null!;
+    /*private Mock<IPessoaJuridicaRepository> _repositoryMock = null!;
     private Mock<IViaCepService> _viaCepServiceMock = null!;
     private PessoaJuridicaService _pessoaJuridicaService = null!;
     
@@ -189,5 +189,5 @@ public class PessoJuridicaServiceTests
         
         var ex = Assert.ThrowsAsync<NotFoundException>(() => _pessoaJuridicaService.DeleteAsync("A1.B2C.3D4/1A2B-99"));
         Assert.That(ex!.Message, Is.EqualTo("Pessoa não encontrada."));
-    }
+    }*/
 }

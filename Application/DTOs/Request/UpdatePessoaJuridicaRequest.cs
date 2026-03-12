@@ -2,8 +2,9 @@ namespace Application.DTOs.Request;
 
 public class UpdatePessoaJuridicaRequest
 {
-    public string RazaoSocial { get; set; } = string.Empty;
-    public string Cnpj { get; set; } = string.Empty;
-    public string Cep { get; set; } = string.Empty;
-    public string NumeroEndereco { get; set; } = string.Empty;
+    public Guid ClienteId { get; set; }
+    public string Nome { get; set; }
+    public string RazaoSocial { get; set; }
+    public string Cnpj { get; set; }
+    public List<UpdateEnderecoRequest> Enderecos { get; set; } = new();
 }

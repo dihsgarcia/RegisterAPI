@@ -32,7 +32,7 @@ namespace Infrastructure.Persistence.Migrations
                 name: "Enderecos",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    EnderecoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ClienteId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Cep = table.Column<string>(type: "nvarchar(9)", maxLength: 9, nullable: false),
                     Logradouro = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
@@ -44,7 +44,7 @@ namespace Infrastructure.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Enderecos", x => x.Id);
+                    table.PrimaryKey("PK_Enderecos", x => x.EnderecoId);
                     table.ForeignKey(
                         name: "FK_Enderecos_Clientes_ClienteId",
                         column: x => x.ClienteId,

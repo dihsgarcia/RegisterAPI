@@ -26,23 +26,23 @@ public class PessoaFisicaService : IPessoaFisicaService
     public async Task<Guid> CreateAsync(CreatePessoaFisicaRequest request)
     {
         var normalizeCpfReq = new Cpf(request.Cpf);
-        
+
         if (await _clienteRepository.GetByDocumentoAsync(normalizeCpfReq.Number) != null)
             throw new BusinessException($"CPF: {normalizeCpfReq.Number} já cadastrado.");
-        
+
         var cliente = new Cliente(
             request.Nome,
             null,
             normalizeCpfReq.Number
         );
-        
+
         foreach (var enderecoReq in request.Enderecos)
         {
             var viaCepResponse = await _viaCepService.GetEnderecoAsync(enderecoReq.Cep);
 
             if (viaCepResponse.IsErro)
                 throw new BusinessException($"CEP: {enderecoReq.Cep} inválido ou não encontrado.");
-            
+
             var endereco = new Endereco(
                 viaCepResponse.Cep,
                 viaCepResponse.Logradouro,
@@ -51,15 +51,15 @@ public class PessoaFisicaService : IPessoaFisicaService
                 viaCepResponse.Bairro,
                 viaCepResponse.Localidade,
                 viaCepResponse.Uf);
-            
+
             cliente.AddEndereco(endereco);
         }
-        
+
         await _clienteRepository.AddAsync(cliente);
 
         return cliente.ClienteId;
     }
-    
+
     public async Task<PessoaFisicaResponse> GetByCpfAsync(string cpf)
     {
         var normalizeCpfReq = new Cpf(cpf);
@@ -71,23 +71,23 @@ public class PessoaFisicaService : IPessoaFisicaService
 
         return PessoaFisicaMapper.ToResponse(cliente);
     }
-    
-    public async Task<PessoaFisicaResponse> GetByIdAsync(Guid id)
+
+    public async Task<PessoaFisicaResponse> GetByIdAsync(Guid clienteId)
     {
-        var cliente = await _clienteRepository.GetByIdAsync(id);
+        var cliente = await _clienteRepository.GetByIdAsync(clienteId);
 
         if (cliente is null)
-            throw new NotFoundException($"Registro para o Id: {id} não encontrado.");
+            throw new NotFoundException($"Registro para o ClienteId: {clienteId} não encontrado.");
 
         return PessoaFisicaMapper.ToResponse(cliente);
     }
 
     public async Task UpdateAsync(UpdatePessoaFisicaRequest request)
     {
-        var cliente = await _clienteRepository.GetByIdAsync(request.Id);
+        var cliente = await _clienteRepository.GetByIdAsync(request.ClienteId);
 
         if (cliente is null)
-            throw new NotFoundException($"Registro para o Id: {request.Id} não encontrado.");
+            throw new NotFoundException($"Registro para o ClienteId: {request.ClienteId} não encontrado.");
 
         var normalizeCpfReq = new Cpf(request.Cpf);
 
@@ -96,9 +96,9 @@ public class PessoaFisicaService : IPessoaFisicaService
             if (await _clienteRepository.GetByDocumentoAsync(normalizeCpfReq.Number) != null)
                 throw new BusinessException($"Já existe um cadastro com o CPF: {normalizeCpfReq.Number}.");
         }
-        
-        cliente.Update(request.Nome, null,normalizeCpfReq.Number);
-        
+
+        cliente.Update(request.Nome, null, normalizeCpfReq.Number);
+
         foreach (var enderecoReq in request.Enderecos)
         {
             var viaCepResponse = await _viaCepService.GetEnderecoAsync(enderecoReq.Cep);
@@ -106,7 +106,7 @@ public class PessoaFisicaService : IPessoaFisicaService
             if (viaCepResponse.IsErro)
                 throw new BusinessException($"CEP: {enderecoReq.Cep} inválido ou não encontrado.");
 
-            if (enderecoReq.Id == null)
+            if (enderecoReq.EnderecoId == null)
             {
                 var endereco = new Endereco(
                     viaCepResponse.Cep,
@@ -116,13 +116,13 @@ public class PessoaFisicaService : IPessoaFisicaService
                     viaCepResponse.Bairro,
                     viaCepResponse.Localidade,
                     viaCepResponse.Uf);
-                
+
                 cliente.AddEndereco(endereco);
             }
             else
             {
                 cliente.UpdateEndereco(
-                    enderecoReq.Id.Value,
+                    enderecoReq.EnderecoId.Value,
                     viaCepResponse.Cep,
                     viaCepResponse.Logradouro,
                     enderecoReq.NumeroEndereco,
@@ -132,17 +132,19 @@ public class PessoaFisicaService : IPessoaFisicaService
                     viaCepResponse.Uf);
             }
         }
-        
+
         await _clienteRepository.UpdateAsync(cliente);
     }
-    
-    public async Task DeleteAsync(Guid id)
+
+    public async Task DeleteAsync(Guid clienteId)
     {
-        var cliente = await _clienteRepository.GetByIdAsync(id);
+        var cliente = await _clienteRepository.GetByIdAsync(clienteId);
 
         if (cliente is null)
-            throw new NotFoundException($"Registro para o Id: {id} não encontrado.");
+            throw new NotFoundException($"Registro para o ClienteId: {clienteId} não encontrado.");
 
         await _clienteRepository.DeleteAsync(cliente);
     }
+
+    
 }

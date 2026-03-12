@@ -62,7 +62,7 @@ namespace Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.Endereco", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("EnderecoId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
@@ -103,7 +103,7 @@ namespace Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.HasKey("Id");
+                    b.HasKey("EnderecoId");
 
                     b.HasIndex("ClienteId");
 

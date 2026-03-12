@@ -3,15 +3,16 @@ using Domain.Entities;
 
 namespace Application.Mappers;
 
-public static class PessoaFisicaMapper
+public static class PessoaJuridicaMapper
 {
-    public static PessoaFisicaResponse ToResponse(Cliente cliente)
+    public static PessoaJuridicaResponse ToResponse(Cliente cliente)
     {
-        return new PessoaFisicaResponse
+        return new PessoaJuridicaResponse
         {
             ClienteId = cliente.ClienteId,
             Nome = cliente.Nome,
-            Cpf = cliente.Documento,
+            RazaoSocial = cliente.RazaoSocial,
+            Cnpj = cliente.Documento,
             Enderecos = cliente.Enderecos.Select(e => new EnderecoResponse
             {
                 EnderecoId = e.EnderecoId,

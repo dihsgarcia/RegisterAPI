@@ -7,8 +7,8 @@ namespace Application.Interfaces;
 public interface IPessoaFisicaService
 {
     Task<Guid> CreateAsync(CreatePessoaFisicaRequest request);
-    Task<PessoaFisicaResponse> GetByIdAsync(Guid id);
+    Task<PessoaFisicaResponse> GetByIdAsync(Guid clienteId);
     Task<PessoaFisicaResponse> GetByCpfAsync(string cpf);
     Task UpdateAsync(UpdatePessoaFisicaRequest request);
-    Task DeleteAsync(Guid id);
+    Task DeleteAsync(Guid clienteId);
 }

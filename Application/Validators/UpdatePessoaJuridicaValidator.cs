@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace Application.Validators;
 
-public class UpdatePessoaFisicaValidator : AbstractValidator<UpdatePessoaFisicaRequest>
+public class UpdatePessoaJuridicaValidator : AbstractValidator<UpdatePessoaJuridicaRequest>
 {
-    public UpdatePessoaFisicaValidator()
+    public UpdatePessoaJuridicaValidator()
     {
         RuleFor(x => x.ClienteId)
             .NotNull()
@@ -26,3 +26,5 @@ public class UpdatePessoaFisicaValidator : AbstractValidator<UpdatePessoaFisicaR
             .SetValidator(new UpdateEnderecoClienteValidator());
     }
 }
+
+    

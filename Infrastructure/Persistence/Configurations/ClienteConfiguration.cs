@@ -32,19 +32,11 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
         
         builder.Property(x => x.DataAtualizacao);
         builder.Property(x => x.DataExclusao);
-
-        /*builder.HasMany(c => c.Enderecos)
-            .WithOne(e => e.Cliente)
-            .HasForeignKey(e => e.ClienteId)
-            .OnDelete(DeleteBehavior.Cascade);*/
         
         builder.HasMany(c => c.Enderecos)
             .WithOne(e => e.Cliente)
             .HasForeignKey(e => e.ClienteId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        /*builder.Navigation(c => c.Enderecos)
-            .UsePropertyAccessMode(PropertyAccessMode.Field);*/
         
         builder.Metadata
             .FindNavigation(nameof(Cliente.Enderecos))

@@ -15,34 +15,44 @@ namespace RegisterAPI.Controllers
             _service = service;
         }
         
-        /*[HttpPost]
-        public async Task<IActionResult> CreatePessoaJuridica(CreatePessoaJuridicaRequest request)
+        [HttpPost("Create")]
+        public async Task<IActionResult> PessoaJuridicaCreate(CreatePessoaJuridicaRequest request)
         {
             var id = await _service.CreateAsync(request);
-            return Ok(new { id });
+            
+            return CreatedAtAction( 
+                nameof(GetByClienteId),
+                new { clienteId = id },
+                new { clienteId = id });
         }
         
-        [HttpGet("buscar")]
-        public async Task<IActionResult> GetByCnpj([FromQuery] string cnpj)
+        [HttpGet("GetByClienteId/{clienteId}")]
+        public async Task<IActionResult> GetByClienteId(Guid clienteId)
         {
-            var pessoa = await _service.GetByCnpjAsync(cnpj);
-            return Ok(pessoa);
+            var pessoaJuridica = await _service.GetByIdAsync(clienteId);
+            return Ok(pessoaJuridica);
         }
         
-        [HttpPut("atualizar")]
+        [HttpGet("GetByCnpj/{cnpj}")]
+        public async Task<IActionResult> GetByCnpj(string cnpj)
+        {
+            var pessoaJuridica = await _service.GetByCnpjAsync(cnpj);
+            return Ok(pessoaJuridica);
+        }
+        
+        [HttpPut("Update")]
         public async Task<IActionResult> Update(
-            [FromQuery] string cnpj,
             [FromBody] UpdatePessoaJuridicaRequest request)
         {
-            await _service.UpdateAsync(cnpj, request);
+            await _service.UpdateAsync(request);
             return NoContent();
         }
         
-        [HttpDelete("deletar")]
-        public async Task<IActionResult> Delete([FromQuery] string cnpj)
+        [HttpDelete("Delete/{clienteId}")]
+        public async Task<IActionResult> Delete(Guid clienteId)
         {
-            await _service.DeleteAsync(cnpj);
+            await _service.DeleteAsync(clienteId);
             return NoContent();
-        }*/
+        }
     }
 }

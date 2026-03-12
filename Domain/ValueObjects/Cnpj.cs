@@ -5,17 +5,17 @@ namespace Domain.ValueObjects;
 
 public sealed class Cnpj
 {
-    public string Numero { get; }
+    public string Number { get; }
 
-    public Cnpj(string numero)
+    public Cnpj(string number)
     {
-        numero = CnpjUtils.Limpar(numero);
+        number = CnpjUtils.Limpar(number);
 
-        if (!CnpjUtils.EhValido(numero))
+        if (!CnpjUtils.EhValido(number))
             throw new DomainException("CNPJ inválido.");
 
-        Numero = numero;
+        Number = number;
     }
 
-    public override string ToString() => Numero;
+    public override string ToString() => Number;
 }

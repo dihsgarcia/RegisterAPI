@@ -10,9 +10,9 @@ public class EnderecoConfiguration : IEntityTypeConfiguration<Endereco>
     {
         builder.ToTable("Enderecos");
 
-        builder.HasKey(x => x.Id);
+        builder.HasKey(x => x.EnderecoId);
         
-        builder.Property(e => e.Id)
+        builder.Property(e => e.EnderecoId)
             .ValueGeneratedOnAdd();
         
         builder.Property(x => x.ClienteId)

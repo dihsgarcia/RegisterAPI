@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace Application.Validators;
 
-public class CreateEnderecoClienteValidator : AbstractValidator<CreateEnderecoPessoa>
+public class CreateEnderecoClienteValidator : AbstractValidator<CreateEnderecoRequest>
 {
     public CreateEnderecoClienteValidator()
     {
@@ -16,7 +16,7 @@ public class CreateEnderecoClienteValidator : AbstractValidator<CreateEnderecoPe
             .WithMessage("Número do endereço é obrigatório.");
 
         RuleFor(x => x.Complemento)
-            .MaximumLength(200)
+            .MaximumLength(100)
             .When(x => !string.IsNullOrEmpty(x.Complemento));
     }
 }

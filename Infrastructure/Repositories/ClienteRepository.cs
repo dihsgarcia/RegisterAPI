@@ -20,11 +20,11 @@ public class ClienteRepository : IClienteRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<Cliente?> GetByIdAsync(Guid id)
+    public async Task<Cliente?> GetByIdAsync(Guid clienteId)
     {
         return await _context.Clientes
             .Include(c => c.Enderecos)
-            .FirstOrDefaultAsync(c => c.ClienteId == id && c.DataExclusao == null);
+            .FirstOrDefaultAsync(c => c.ClienteId == clienteId && c.DataExclusao == null);
     }
 
     public async Task<Cliente?> GetByDocumentoAsync(string documento)

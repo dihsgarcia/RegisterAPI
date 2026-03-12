@@ -21,15 +21,15 @@ namespace RegisterAPI.Controllers
             var id = await _service.CreateAsync(request);
             
             return CreatedAtAction( 
-                nameof(GetById),
-                new { id = id },
-                new { id = id });
+                nameof(GetByClienteId),
+                new { clienteId = id },
+                new { clienteId = id });
         }
         
-        [HttpGet("GetById/{id}")]
-        public async Task<IActionResult> GetById(Guid id)
+        [HttpGet("GetByClienteId/{clienteId}")]
+        public async Task<IActionResult> GetByClienteId(Guid clienteId)
         {
-            var pessoaFisica = await _service.GetByIdAsync(id);
+            var pessoaFisica = await _service.GetByIdAsync(clienteId);
             return Ok(pessoaFisica);
         }
         
@@ -48,10 +48,10 @@ namespace RegisterAPI.Controllers
             return NoContent();
         }
         
-        [HttpDelete("DeleteById/{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+        [HttpDelete("Delete/{clienteId}")]
+        public async Task<IActionResult> Delete(Guid clienteId)
         {
-            await _service.DeleteAsync(id);
+            await _service.DeleteAsync(clienteId);
             return NoContent();
         }
     }

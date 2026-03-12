@@ -1,11 +1,13 @@
 using Application.DTOs.Request;
-using Domain.Entities;
+using Application.DTOs.Responses;
 
 namespace Application.Interfaces;
 
 public interface IPessoaJuridicaService
 {
     Task<Guid> CreateAsync(CreatePessoaJuridicaRequest request);
-    Task UpdateAsync(string cnpj, UpdatePessoaJuridicaRequest request);
-    Task DeleteAsync(string cnpj);
+    Task<PessoaJuridicaResponse> GetByIdAsync(Guid clienteId);
+    Task<PessoaJuridicaResponse> GetByCnpjAsync(string cnpj);
+    Task UpdateAsync(UpdatePessoaJuridicaRequest request);
+    Task DeleteAsync(Guid clienteId);
 }
