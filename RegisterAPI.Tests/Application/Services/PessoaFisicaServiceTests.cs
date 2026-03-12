@@ -18,6 +18,7 @@ public class PessoaFisicaServiceTests
     private PessoaFisicaService _service;
 
     private const string ValidCpf = "52998224725";
+    private const string InValidCpf = "111111222XX";
     private const string ValidCep = "01001000";
 
     [SetUp]
@@ -29,8 +30,65 @@ public class PessoaFisicaServiceTests
         _service = new PessoaFisicaService(
             _clienteRepository.Object,
             _cepService.Object);
+        
+        _cepService
+            .Setup(c => c.GetEnderecoAsync(It.IsAny<string>()))
+            .ReturnsAsync(new EnderecoCepResult
+            {
+                Cep = ValidCep,
+                Logradouro = "Rua Atualizada",
+                Bairro = "Centro",
+                Cidade = "São Paulo",
+                Estado = "SP"
+            });
     }
+    
+    [Test]
+    public async Task Should_Create_PessoaFisica_With_Valid_Cpf()
+    {
+        var request = new CreatePessoaFisicaRequest
+        {
+            Nome = "João da Silva",
+            Cpf = ValidCpf,
+            Enderecos = new List<CreateEnderecoRequest>
+            {
+                new CreateEnderecoRequest
+                {
+                    Cep = ValidCep,
+                    NumeroEndereco = "100",
+                    Complemento = "Apto 1"
+                }
+            }
+        };
 
+        _clienteRepository.Setup(r => r.GetPessoaFisicaByCpfAsync(ValidCpf))
+            .ReturnsAsync((PessoaFisica?)null);
+
+        var result = await _service.CreateAsync(request);
+
+        Assert.That(result, Is.Not.EqualTo(Guid.Empty));
+        _clienteRepository.Verify(r => r.AddAsync(It.IsAny<PessoaFisica>()), Times.Once);
+    }
+    
+    [Test]
+    [TestCase(InValidCpf)]
+    public void Should_Throw_When_Cpf_Is_Invalid(string cpf)
+    {
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByCpfAsync(It.IsAny<string>()))
+            .ReturnsAsync(new PessoaFisica("Adnaldo Pereira", cpf));
+
+        var request = new CreatePessoaFisicaRequest
+        {
+            Nome = "Fabio Nunes",
+            Cpf = cpf,
+            Enderecos = []
+        };
+
+        Assert.ThrowsAsync<DomainException>(
+            async () => await _service.CreateAsync(request));
+    }
+    
     [Test]
     public void Should_Throw_When_Cpf_Already_Exists()
     {
@@ -233,18 +291,7 @@ public class PessoaFisicaServiceTests
         _clienteRepository
             .Setup(r => r.GetPessoaFisicaByIdAsync(It.IsAny<Guid>()))
             .ReturnsAsync(cliente);
-
-        _cepService
-            .Setup(c => c.GetEnderecoAsync(It.IsAny<string>()))
-            .ReturnsAsync(new EnderecoCepResult
-            {
-                Cep = ValidCep,
-                Logradouro = "Rua Atualizada",
-                Bairro = "Centro",
-                Cidade = "São Paulo",
-                Estado = "SP"
-            });
-
+        
         var request = new UpdatePessoaFisicaRequest
         {
             ClienteId = Guid.NewGuid(),
@@ -277,18 +324,7 @@ public class PessoaFisicaServiceTests
         _clienteRepository
             .Setup(r => r.GetPessoaFisicaByIdAsync(It.IsAny<Guid>()))
             .ReturnsAsync(cliente);
-
-        _cepService
-            .Setup(c => c.GetEnderecoAsync(It.IsAny<string>()))
-            .ReturnsAsync(new EnderecoCepResult
-            {
-                Cep = ValidCep,
-                Logradouro = "Rua Nova",
-                Bairro = "Centro",
-                Cidade = "São Paulo",
-                Estado = "SP"
-            });
-
+        
         var request = new UpdatePessoaFisicaRequest
         {
             ClienteId = Guid.NewGuid(),

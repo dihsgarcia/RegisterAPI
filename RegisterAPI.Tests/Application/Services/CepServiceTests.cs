@@ -3,7 +3,7 @@ using Application.Interfaces;
 using Application.Services;
 using Moq;
 
-namespace RegisterAPI.Tests.Services;
+namespace RegisterAPI.Tests.Application.Services;
 
 [TestFixture]
 public class CepServiceTests

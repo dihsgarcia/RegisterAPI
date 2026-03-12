@@ -1,3 +1,4 @@
+using Application.DTOs;
 using Application.DTOs.Request;
 using Application.DTOs.Responses;
 using Application.Interfaces;
@@ -12,182 +13,381 @@ namespace RegisterAPI.Tests.Application.Services;
 [TestFixture]
 public class PessoJuridicaServiceTests
 {
-    /*private Mock<IPessoaJuridicaRepository> _repositoryMock = null!;
-    private Mock<IViaCepService> _viaCepServiceMock = null!;
-    private PessoaJuridicaService _pessoaJuridicaService = null!;
-    
+    private Mock<IClienteRepository> _clienteRepository;
+    private Mock<ICepService> _cepService;
+    private PessoaJuridicaService _service;
+
+    private const string ValidCnpj =   "87640720000108";
+    private const string InValidCnpj = "11122233344455";
+    private const string ValidCnpjAlpha = "12A3C4560DE199";
+    private const string ValidCep = "01001000";
+    private const string RazaoSocialMock = "Silph Co.";
+
     [SetUp]
-    public void SetUp()
+    public void Setup()
     {
-        _repositoryMock = new Mock<IPessoaJuridicaRepository>();
-        _viaCepServiceMock = new Mock<IViaCepService>();
-        _pessoaJuridicaService = new PessoaJuridicaService(_repositoryMock.Object, _viaCepServiceMock.Object);
-    }
-    
-    [Test]
-    public async Task CreateAsync_ValidRequest_Should_Return_Id()
-    {
-        _repositoryMock.Setup(x => x.CnpjExisteAsync(It.IsAny<string>())).ReturnsAsync(false);
-        _viaCepServiceMock.Setup(x => x.GetEnderecoAsync(It.IsAny<string>()))
-            .ReturnsAsync(new ViaCepResponse
+        _clienteRepository = new Mock<IClienteRepository>();
+        _cepService = new Mock<ICepService>();
+
+        _service = new PessoaJuridicaService(
+            _clienteRepository.Object,
+            _cepService.Object);
+        
+        _cepService
+            .Setup(c => c.GetEnderecoAsync(It.IsAny<string>()))
+            .ReturnsAsync(new EnderecoCepResult
             {
-                Cep = "01310100",
-                Logradouro = "Rua do Brasil",
-                Bairro = "Rua do Brasil",
-                Localidade = "Rua do Brasil",
-                Uf = "SP"
+                Cep = ValidCep,
+                Logradouro = "Rua Atualizada",
+                Bairro = "Centro",
+                Cidade = "São Paulo",
+                Estado = "SP"
             });
-        _repositoryMock.Setup(x => x.AddAsync(It.IsAny<PessoaJuridica>()))
-            .Returns(Task.CompletedTask);
-
+    }
+    
+    [Test]
+    [TestCase(ValidCnpj)]
+    [TestCase(ValidCnpjAlpha)]
+    public async Task Should_Create_PessoaJuridica_With_Valid_Cnpjs(string cnpj)
+    {
         var request = new CreatePessoaJuridicaRequest
         {
-            Cnpj = "A1.B2C.3D4/1A2B-99",
-            RazaoSocial = "Empresa fantasma",
-            NumeroEndereco = "1000",
-            Cep =  "01310100",
+            Nome = "Giovanni Rocket Leader",
+            RazaoSocial = RazaoSocialMock,
+            Cnpj = cnpj,
+            Enderecos =
+            [
+                new CreateEnderecoRequest
+                {
+                    Cep = ValidCep,
+                    NumeroEndereco = "100",
+                    Complemento = "casa 2"
+                }
+            ]
         };
+
+        _clienteRepository.Setup(r => r.GetPessoaJuridicaByCnpjAsync(cnpj))
+            .ReturnsAsync((PessoaJuridica?)null);
         
-        var result = await _pessoaJuridicaService.CreateAsync(request);
-        
+        var result = await _service.CreateAsync(request);
+
         Assert.That(result, Is.Not.EqualTo(Guid.Empty));
-        _repositoryMock.Verify(x => x.AddAsync(It.IsAny<PessoaJuridica>()), Times.Once);
+        _clienteRepository.Verify(r => r.AddAsync(It.IsAny<PessoaJuridica>()), Times.Once);
+        
+        _clienteRepository.Invocations.Clear();
     }
     
     [Test]
-    public async Task CreateAsync_CnpjAlreadyExists_Should_ThrowsBusinessExcepetion()
+    [TestCase(InValidCnpj)]
+    public void Should_Throw_When_Cnpj_Is_invalid(string cnpj)
     {
-        _repositoryMock.Setup(x => x.CnpjExisteAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByCnpjAsync(It.IsAny<string>()))
+            .ReturnsAsync(new PessoaJuridica("Adnaldo Pereira", RazaoSocialMock, cnpj));
+
+        var request = new CreatePessoaJuridicaRequest
+        {
+            Nome = "Fabio Nunes",
+            RazaoSocial = RazaoSocialMock,
+            Cnpj = cnpj,
+            Enderecos = []
+        };
+
+        Assert.ThrowsAsync<DomainException>(
+            async () => await _service.CreateAsync(request));
+    }
+    
+    [Test]
+    public void Should_Throw_When_Cnpj_Already_Exists()
+    {
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByCnpjAsync(It.IsAny<string>()))
+            .ReturnsAsync(new PessoaJuridica("Adnaldo Pereira", RazaoSocialMock, ValidCnpj));
+
+        var request = new CreatePessoaJuridicaRequest
+        {
+            Nome = "Fabio Nunes",
+            RazaoSocial = RazaoSocialMock,
+            Cnpj = ValidCnpj,
+            Enderecos = []
+        };
+
+        Assert.ThrowsAsync<BusinessException>(
+            async () => await _service.CreateAsync(request));
+    }
+
+    [Test]
+    public void Should_Throw_When_Cep_Is_Invalid()
+    {
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByCnpjAsync(It.IsAny<string>()))
+            .ReturnsAsync((PessoaJuridica?)null);
+
+        _cepService
+            .Setup(c => c.GetEnderecoAsync(It.IsAny<string>()))
+            .ReturnsAsync((EnderecoCepResult?)null);
         
         var request = new CreatePessoaJuridicaRequest
         {
-            Cnpj = "A1.B2C.3D4/1A2B-99",
-            RazaoSocial = "Empresa fantasma",
-            NumeroEndereco = "1000",
-            Cep =  "01310100",
+            Nome = "Fabio Nunes",
+            RazaoSocial = RazaoSocialMock,
+            Cnpj = ValidCnpj,
+            Enderecos =
+            [
+                new CreateEnderecoRequest
+                {
+                    Cep = ValidCep,
+                    NumeroEndereco = "100",
+                    Complemento = "casa 2"
+                }
+            ]
         };
-
-        var ex = Assert.ThrowsAsync<BusinessException>(() => _pessoaJuridicaService.CreateAsync(request));
-        Assert.That(ex!.Message, Is.EqualTo("CNPJ já cadastrado."));
+        
+        Assert.ThrowsAsync<BusinessException>(
+            async () => await _service.CreateAsync(request));
     }
-    
+
     [Test]
-    public async Task GetByCnpjAsync_ExistsCnpj_Should_Return_Pessoa()
+    public async Task Should_Return_PessoaJuridica_By_Cnpj()
     {
-        var endereco = new Endereco(
-            "01310100", 
-            "Av Paulista", 
-            "1000", 
-            "bela Vista", 
-            "Sao Paulo",
-            "SP");
-        
-        var pessoaJuridica = new PessoaJuridica("Empresa fantasma", "A1.B2C.3D4/1A2B-99", endereco);
-        
-        _repositoryMock.Setup(x => x.GetByCnpjAsync(It.IsAny<string>())).ReturnsAsync(pessoaJuridica);
-        
-        var result = await _pessoaJuridicaService.GetByCnpjAsync("A1.B2C.3D4/1A2B-99");
+        var cliente = new PessoaJuridica("Marina Garcia", RazaoSocialMock, ValidCnpj);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByCnpjAsync(It.IsAny<string>()))
+            .ReturnsAsync(cliente);
+
+        var result = await _service.GetByCnpjAsync(ValidCnpj);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Cnpj, Is.EqualTo(pessoaJuridica.Cnpj));
+        Assert.That(result.Cnpj, Is.EqualTo(ValidCnpj));
     }
     
     [Test]
-    public async Task GetByCnpjAsync_CnpjNotExists_Should_ThrowsNotFoundExcepetion()
+    public void Should_Throw_When_GetByCnpj_Not_Found()
     {
-        _repositoryMock.Setup(x => x.GetByCnpjAsync(It.IsAny<string>()))
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByCnpjAsync(It.IsAny<string>()))
             .ReturnsAsync((PessoaJuridica?)null);
-        
-        var ex = Assert.ThrowsAsync<NotFoundException>(() => _pessoaJuridicaService.GetByCnpjAsync("A1.B2C.3D4/1A2B-99"));
-        Assert.That(ex!.Message, Is.EqualTo("Pessoa não encontrada."));
-    }
-    
-    [Test]
-    public async Task UpdateAsync_ValidRequest_Should_Ok()
-    {
-        var endereco = new Endereco(
-            "01310100", 
-            "Av Paulista", 
-            "1000", 
-            "bela Vista", 
-            "Sao Paulo",
-            "SP");
-        
-        var pessoaJuridica = new PessoaJuridica("Empresa fantasma", "A1.B2C.3D4/1A2B-99", endereco);
-        
-        _repositoryMock.Setup(x => x.GetByCnpjAsync(It.IsAny<string>())).ReturnsAsync(pessoaJuridica);
-        _viaCepServiceMock.Setup(x => x.GetEnderecoAsync(It.IsAny<string>()))
-            .ReturnsAsync(new ViaCepResponse
-            {
-                Cep = "01310100",
-                Logradouro = "Rua do Brasil",
-                Bairro = "Rua do Brasil",
-                Localidade = "Rua do Brasil",
-                Uf = "SP"
-            });
-        _repositoryMock.Setup(x => x.AddAsync(It.IsAny<PessoaJuridica>()))
-            .Returns(Task.CompletedTask);
 
-        var request = new UpdatePessoaJuridicaRequest()
-        {
-            Cnpj = "A1.B2C.3D4/1A2B-99",
-            RazaoSocial = "Empresa fantasma",
-            NumeroEndereco = "1000",
-            Cep =  "01310100",
-        };
-        
-        await _pessoaJuridicaService.UpdateAsync("A1.B2C.3D4/1A2B-99" , request);
-        
-        _repositoryMock.Verify(x => x.UpdateAsync(It.IsAny<PessoaJuridica>()), Times.Once);
+        Assert.ThrowsAsync<NotFoundException>(
+            async () => await _service.GetByCnpjAsync(ValidCnpj));
     }
-    
+
     [Test]
-    public async Task UpdateAsync_CnpjNotExists_Should_ThrowsNotFoundExcepetion()
+    public async Task Should_Return_PessoaJuridica_By_Id()
     {
-        _repositoryMock.Setup(x => x.GetByCnpjAsync(It.IsAny<string>()))
+        var cliente = new PessoaJuridica("Bruna Oliveira", RazaoSocialMock, ValidCnpj);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(cliente);
+
+        var result = await _service.GetByIdAsync(Guid.NewGuid());
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Cnpj, Is.EqualTo(ValidCnpj));
+    }
+
+    [Test]
+    public void Should_Throw_When_GetById_Not_Found()
+    {
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByIdAsync(It.IsAny<Guid>()))
             .ReturnsAsync((PessoaJuridica?)null);
-        
-        var request = new UpdatePessoaJuridicaRequest()
-        {
-            Cnpj = "A1.B2C.3D4/1A2B-99",
-            RazaoSocial = "Empresa fantasma",
-            NumeroEndereco = "1000",
-            Cep =  "01310100",
-        };
-        
-        var ex = Assert.ThrowsAsync<NotFoundException>(() => _pessoaJuridicaService.UpdateAsync("A1.B2C.3D4/1A2B-99", request));
-        Assert.That(ex!.Message, Is.EqualTo("Pessoa não encontrada."));
+
+        Assert.ThrowsAsync<NotFoundException>(
+            async () => await _service.GetByIdAsync(Guid.NewGuid()));
     }
     
     [Test]
-    public async Task DeleteAsync_CnpjExists_Should_Deletes()
+    public void Should_Throw_When_Update_Client_Not_Found()
     {
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync((PessoaJuridica?)null);
+
+        var request = new UpdatePessoaJuridicaRequest
+        {
+            ClienteId = Guid.NewGuid(),
+            Nome = "Bruna Oliveira",
+            RazaoSocial =  RazaoSocialMock,
+            Cnpj = ValidCnpj,
+            Enderecos = []
+        };
+
+        var exception = Assert.ThrowsAsync<NotFoundException>(
+            async () => await _service.UpdateAsync(request));
+
+        Assert.That(exception, Is.Not.Null);
+    }
+    
+    [Test]
+    public void Should_Throw_When_Cnpj_Already_Exists_On_Update()
+    {
+        var cliente = new PessoaJuridica("Jose Castro", RazaoSocialMock, ValidCnpj);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(cliente);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByCnpjAsync(It.IsAny<string>()))
+            .ReturnsAsync(new PessoaJuridica("Outro", RazaoSocialMock, ValidCnpjAlpha));
+
+        var request = new UpdatePessoaJuridicaRequest
+        {
+            ClienteId = Guid.NewGuid(),
+            Nome = "Jose Castro",
+            RazaoSocial =  RazaoSocialMock,
+            Cnpj = ValidCnpjAlpha,
+            Enderecos = []
+        };
+
+        var exception = Assert.ThrowsAsync<BusinessException>(
+            async () => await _service.UpdateAsync(request));
+
+        Assert.That(exception, Is.Not.Null);
+    }
+    
+    [Test]
+    public void Should_Throw_When_Cep_Invalid_On_Update()
+    {
+        var cliente = new PessoaJuridica("Marco Brito", RazaoSocialMock, ValidCnpj);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(cliente);
+
+        _cepService
+            .Setup(c => c.GetEnderecoAsync(It.IsAny<string>()))
+            .ReturnsAsync((EnderecoCepResult?)null);
+
+        var request = new UpdatePessoaJuridicaRequest
+        {
+            ClienteId = Guid.NewGuid(),
+            Nome = "Carla Santos",
+            RazaoSocial =  RazaoSocialMock,
+            Cnpj = ValidCnpj,
+            Enderecos =
+            [
+                new UpdateEnderecoRequest
+                {
+                    Cep = ValidCep,
+                    NumeroEndereco = "100",
+                    Complemento = ""
+                }
+            ]
+        };
+
+        var exception = Assert.ThrowsAsync<BusinessException>(
+            async () => await _service.UpdateAsync(request));
+
+        Assert.That(exception, Is.Not.Null);
+    }
+    
+    [Test]
+    public async Task Should_Update_Existing_Address()
+    {
+        var cliente = new PessoaJuridica("Laura Marinho", RazaoSocialMock, ValidCnpj);
+
         var endereco = new Endereco(
-            "01310100", 
-            "Av Paulista", 
-            "1000", 
-            "bela Vista", 
-            "Sao Paulo",
+            ValidCep,
+            "Rua Teste",
+            "10",
+            "",
+            "Centro",
+            "São Paulo",
             "SP");
+
+        cliente.AddEndereco(endereco);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(cliente);
         
-        var pessoaJuridica = new PessoaJuridica("Empresa fantasma", "A1.B2C.3D4/1A2B-99", endereco);
-        
-        _repositoryMock.Setup(x => x.GetByCnpjAsync(It.IsAny<string>())).ReturnsAsync(pessoaJuridica);
-        _repositoryMock.Setup(x => x.DeleteAsync(It.IsAny<PessoaJuridica>()))
-            .Returns(Task.CompletedTask);
-        
-        await _pessoaJuridicaService.DeleteAsync("A1.B2C.3D4/1A2B-99");
-        
-        _repositoryMock.Verify(x => x.DeleteAsync(It.IsAny<PessoaJuridica>()), Times.Once);
+        var request = new UpdatePessoaJuridicaRequest
+        {
+            ClienteId = Guid.NewGuid(),
+            Nome = "Diego Rodrigues",
+            RazaoSocial =  RazaoSocialMock,
+            Cnpj = ValidCnpj,
+            Enderecos =
+            [
+                new UpdateEnderecoRequest
+                {
+                    EnderecoId = endereco.EnderecoId,
+                    Cep = ValidCep,
+                    NumeroEndereco = "200",
+                    Complemento = "Ap 10"
+                }
+            ]
+        };
+
+        await _service.UpdateAsync(request);
+
+        _clienteRepository.Verify(
+            r => r.UpdateAsync(It.IsAny<Cliente>()),
+            Times.Once);
     }
     
     [Test]
-    public async Task DeleteAsync_CnpjNotExists_Should_ThrowsNotFoundExcepetion()
+    public async Task Should_Add_New_Address_On_Update()
     {
-        _repositoryMock.Setup(x => x.GetByCnpjAsync(It.IsAny<string>()))
-            .ReturnsAsync((PessoaJuridica?)null);
+        var cliente = new PessoaJuridica("Pedro Hugo", RazaoSocialMock, ValidCnpj);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(cliente);
         
-        var ex = Assert.ThrowsAsync<NotFoundException>(() => _pessoaJuridicaService.DeleteAsync("A1.B2C.3D4/1A2B-99"));
-        Assert.That(ex!.Message, Is.EqualTo("Pessoa não encontrada."));
-    }*/
+        var request = new UpdatePessoaJuridicaRequest
+        {
+            ClienteId = Guid.NewGuid(),
+            Nome = "Diego Garcia",
+            RazaoSocial =  RazaoSocialMock,
+            Cnpj = ValidCnpj,
+            Enderecos =
+            [
+                new UpdateEnderecoRequest
+                {
+                    Cep = ValidCep,
+                    NumeroEndereco = "300",
+                    Complemento = ""
+                }
+            ]
+        };
+
+        await _service.UpdateAsync(request);
+
+        _clienteRepository.Verify(
+            r => r.UpdateAsync(It.IsAny<Cliente>()),
+            Times.Once);
+    }
+    
+    [Test]
+    public async Task Should_Delete_PessoaJuridica()
+    {
+        var cliente = new PessoaJuridica("Jonatas Meireles", RazaoSocialMock, ValidCnpj);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(cliente);
+
+        await _service.DeleteAsync(Guid.NewGuid());
+
+        _clienteRepository.Verify(
+            r => r.DeleteAsync(It.IsAny<Cliente>()),
+            Times.Once);
+    }
+
+    [Test]
+    public void Should_Throw_When_Delete_Not_Found()
+    {
+        _clienteRepository
+            .Setup(r => r.GetPessoaJuridicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync((PessoaJuridica?)null);
+
+        Assert.ThrowsAsync<NotFoundException>(
+            async () => await _service.DeleteAsync(Guid.NewGuid()));
+    }
 }
+
