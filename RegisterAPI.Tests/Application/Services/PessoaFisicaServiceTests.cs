@@ -1,197 +1,341 @@
+using Application.DTOs;
 using Application.DTOs.Request;
-using Application.DTOs.Responses;
 using Application.Interfaces;
 using Application.Services;
 using Domain.Entities;
 using Domain.Extensions;
 using Domain.Repositories;
 using Moq;
+using NUnit.Framework;
 
 namespace RegisterAPI.Tests.Application.Services;
 
 [TestFixture]
 public class PessoaFisicaServiceTests
 {
-    /*private Mock<IPessoaFisicaRepository> _repositoryMock = null!;
-    private Mock<IClienteRepository> _clienteRepositoryMock = null!;
-    private Mock<IViaCepService> _viaCepServiceMock = null!;
-    private PessoaFisicaService _pessoaFisicaService = null!;
-    
-    
+    private Mock<IClienteRepository> _clienteRepository;
+    private Mock<ICepService> _cepService;
+    private PessoaFisicaService _service;
+
+    private const string ValidCpf = "52998224725";
+    private const string ValidCep = "01001000";
+
     [SetUp]
-    public void SetUp()
+    public void Setup()
     {
-        _repositoryMock = new Mock<IPessoaFisicaRepository>();
-        _viaCepServiceMock = new Mock<IViaCepService>();
-        _pessoaFisicaService = new PessoaFisicaService(
-            _repositoryMock.Object, 
-            _clienteRepositoryMock.Object, 
-            _viaCepServiceMock.Object);
+        _clienteRepository = new Mock<IClienteRepository>();
+        _cepService = new Mock<ICepService>();
+
+        _service = new PessoaFisicaService(
+            _clienteRepository.Object,
+            _cepService.Object);
     }
-    
+
     [Test]
-    public async Task CreateAsync_ValidRequest_Should_Return_Id()
+    public void Should_Throw_When_Cpf_Already_Exists()
     {
-        _repositoryMock.Setup(x => x.CpfExisteAsync(It.IsAny<string>())).ReturnsAsync(false);
-        _viaCepServiceMock.Setup(x => x.GetEnderecoAsync(It.IsAny<string>()))
-            .ReturnsAsync(new ViaCepResponse
-            {
-                Cep = "01310100",
-                Logradouro = "Rua do Brasil",
-                Bairro = "Rua do Brasil",
-                Localidade = "Rua do Brasil",
-                Uf = "SP"
-            });
-        _repositoryMock.Setup(x => x.AddAsync(It.IsAny<PessoaFisica>()))
-            .Returns(Task.CompletedTask);
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByCpfAsync(It.IsAny<string>()))
+            .ReturnsAsync(new PessoaFisica("Adnaldo Pereira", ValidCpf));
 
         var request = new CreatePessoaFisicaRequest
         {
-            Cpf = "52998224725",
-            Nome = "Joao Silva",
-            NumeroEndereco = "1000",
-        };
-        
-        var result = await _pessoaFisicaService.CreateAsync(request);
-        
-        Assert.That(result, Is.Not.EqualTo(Guid.Empty));
-        _repositoryMock.Verify(x => x.AddAsync(It.IsAny<PessoaFisica>()), Times.Once);
-    }
-    
-    [Test]
-    public async Task CreateAsync_CpfAlreadyExists_Should_ThrowsBusinessExcepetion()
-    {
-        _repositoryMock.Setup(x => x.CpfExisteAsync(It.IsAny<string>())).ReturnsAsync(true);
-        
-        var request = new CreatePessoaFisicaRequest
-        {
-            Cpf = "52998224725",
-            Nome = "Joao Silva",
-            Cep =  "01310100",
-            NumeroEndereco = "1000",
+            Nome = "Fabio Nunes",
+            Cpf = ValidCpf,
+            Enderecos = []
         };
 
-        var ex = Assert.ThrowsAsync<BusinessException>(() => _pessoaFisicaService.CreateAsync(request));
-        Assert.That(ex!.Message, Is.EqualTo("CPF já cadastrado."));
+        Assert.ThrowsAsync<BusinessException>(
+            async () => await _service.CreateAsync(request));
     }
-    
+
     [Test]
-    public async Task GetByCpfAsync_ExistsCpf_Should_Return_Pessoa()
+    public void Should_Throw_When_Cep_Is_Invalid()
     {
-        var endereco = new Endereco(
-            "01310100", 
-            "Av Paulista", 
-            "1000", 
-            "bela Vista", 
-            "Sao Paulo",
-            "SP");
-        
-        var pessoFisica = new PessoaFisica("Joao Silva", "52998224725", endereco);
-        
-        _repositoryMock.Setup(x => x.GetByCpfAsync(It.IsAny<string>())).ReturnsAsync(pessoFisica);
-        
-        var result = await _pessoaFisicaService.GetByCpfAsync("52998224725");
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByCpfAsync(It.IsAny<string>()))
+            .ReturnsAsync((PessoaFisica?)null);
+
+        _cepService
+            .Setup(c => c.GetEnderecoAsync(It.IsAny<string>()))
+            .ReturnsAsync((EnderecoCepResult?)null);
+
+        var request = new CreatePessoaFisicaRequest
+        {
+            Nome = "Fabio Nunes",
+            Cpf = ValidCpf,
+            Enderecos =
+            [
+                new CreateEnderecoRequest
+                {
+                    Cep = ValidCep,
+                    NumeroEndereco = "100",
+                    Complemento = "casa 2"
+                }
+            ]
+        };
+
+        Assert.ThrowsAsync<BusinessException>(
+            async () => await _service.CreateAsync(request));
+    }
+
+    [Test]
+    public async Task Should_Return_PessoaFisica_By_Cpf()
+    {
+        var cliente = new PessoaFisica("Marina Garcia", ValidCpf);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByCpfAsync(It.IsAny<string>()))
+            .ReturnsAsync(cliente);
+
+        var result = await _service.GetByCpfAsync(ValidCpf);
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Cpf, Is.EqualTo(pessoFisica.Cpf));
+        Assert.That(result.Cpf, Is.EqualTo(ValidCpf));
     }
-    
-    [Test]
-    public async Task GetByCpfAsync_CpfNotExists_Should_ThrowsNotFoundExcepetion()
-    {
-        _repositoryMock.Setup(x => x.GetByCpfAsync(It.IsAny<string>()))
-            .ReturnsAsync((PessoaFisica?)null);
-        
-        var ex = Assert.ThrowsAsync<NotFoundException>(() => _pessoaFisicaService.GetByCpfAsync("52998224725"));
-        Assert.That(ex!.Message, Is.EqualTo("Pessoa não encontrada."));
-    }
-    
-    [Test]
-    public async Task UpdateAsync_ValidRequest_Should_Ok()
-    {
-        var endereco = new Endereco(
-            "01310100", 
-            "Av Paulista", 
-            "1000", 
-            "bela Vista", 
-            "Sao Paulo",
-            "SP");
-        
-        var pessoFisica = new PessoaFisica("Joao Silva", "52998224725", endereco);
-        
-        _repositoryMock.Setup(x => x.GetByCpfAsync(It.IsAny<string>())).ReturnsAsync(pessoFisica);
-        _viaCepServiceMock.Setup(x => x.GetEnderecoAsync(It.IsAny<string>()))
-            .ReturnsAsync(new ViaCepResponse
-            {
-                Cep = "01310100",
-                Logradouro = "Rua do Brasil",
-                Bairro = "Rua do Brasil",
-                Localidade = "Rua do Brasil",
-                Uf = "SP"
-            });
-        _repositoryMock.Setup(x => x.AddAsync(It.IsAny<PessoaFisica>()))
-            .Returns(Task.CompletedTask);
 
-        var request = new UpdatePessoaFisicaRequest()
-        {
-            Cpf = "52998224725",
-            Nome = "Joao Silva",
-            Cep = "01310100",
-            NumeroEndereco = "1000",
-        };
-        
-        await _pessoaFisicaService.UpdateAsync("52998224725" , request);
-        
-        _repositoryMock.Verify(x => x.UpdateAsync(It.IsAny<PessoaFisica>()), Times.Once);
-    }
-    
     [Test]
-    public async Task UpdateAsync_CpfNotExists_Should_ThrowsNotFoundExcepetion()
+    public void Should_Throw_When_GetByCpf_Not_Found()
     {
-        _repositoryMock.Setup(x => x.GetByCpfAsync(It.IsAny<string>()))
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByCpfAsync(It.IsAny<string>()))
             .ReturnsAsync((PessoaFisica?)null);
-        
-        var request = new UpdatePessoaFisicaRequest()
-        {
-            Cpf = "52998224725",
-            Nome = "Joao Silva",
-            Cep = "01310100",
-            NumeroEndereco = "1000",
-        };
-        
-        var ex = Assert.ThrowsAsync<NotFoundException>(() => _pessoaFisicaService.UpdateAsync("52998224725", request));
-        Assert.That(ex!.Message, Is.EqualTo("Pessoa não encontrada."));
+
+        Assert.ThrowsAsync<NotFoundException>(
+            async () => await _service.GetByCpfAsync(ValidCpf));
+    }
+
+    [Test]
+    public async Task Should_Return_PessoaFisica_By_Id()
+    {
+        var cliente = new PessoaFisica("Bruna Oliveira", ValidCpf);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(cliente);
+
+        var result = await _service.GetByIdAsync(Guid.NewGuid());
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Cpf, Is.EqualTo(ValidCpf));
+    }
+
+    [Test]
+    public void Should_Throw_When_GetById_Not_Found()
+    {
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync((PessoaFisica?)null);
+
+        Assert.ThrowsAsync<NotFoundException>(
+            async () => await _service.GetByIdAsync(Guid.NewGuid()));
     }
     
     [Test]
-    public async Task DeleteAsync_CpfExists_Should_Deletes()
+    public void Should_Throw_When_Update_Client_Not_Found()
     {
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync((PessoaFisica?)null);
+
+        var request = new UpdatePessoaFisicaRequest
+        {
+            ClienteId = Guid.NewGuid(),
+            Nome = "Bruna Oliveira",
+            Cpf = ValidCpf,
+            Enderecos = []
+        };
+
+        var exception = Assert.ThrowsAsync<NotFoundException>(
+            async () => await _service.UpdateAsync(request));
+
+        Assert.That(exception, Is.Not.Null);
+    }
+    
+    [Test]
+    public void Should_Throw_When_Cpf_Already_Exists_On_Update()
+    {
+        var cliente = new PessoaFisica("Jose Castro", ValidCpf);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(cliente);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByCpfAsync(It.IsAny<string>()))
+            .ReturnsAsync(new PessoaFisica("Outro", "55706301808"));
+
+        var request = new UpdatePessoaFisicaRequest
+        {
+            ClienteId = Guid.NewGuid(),
+            Nome = "Jose Castro",
+            Cpf = "55706301808",
+            Enderecos = []
+        };
+
+        var exception = Assert.ThrowsAsync<BusinessException>(
+            async () => await _service.UpdateAsync(request));
+
+        Assert.That(exception, Is.Not.Null);
+    }
+    
+    [Test]
+    public void Should_Throw_When_Cep_Invalid_On_Update()
+    {
+        var cliente = new PessoaFisica("Marco Brito", ValidCpf);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(cliente);
+
+        _cepService
+            .Setup(c => c.GetEnderecoAsync(It.IsAny<string>()))
+            .ReturnsAsync((EnderecoCepResult?)null);
+
+        var request = new UpdatePessoaFisicaRequest
+        {
+            ClienteId = Guid.NewGuid(),
+            Nome = "Carla Santos",
+            Cpf = ValidCpf,
+            Enderecos =
+            [
+                new UpdateEnderecoRequest
+                {
+                    Cep = ValidCep,
+                    NumeroEndereco = "100",
+                    Complemento = ""
+                }
+            ]
+        };
+
+        var exception = Assert.ThrowsAsync<BusinessException>(
+            async () => await _service.UpdateAsync(request));
+
+        Assert.That(exception, Is.Not.Null);
+    }
+    
+    [Test]
+    public async Task Should_Update_Existing_Address()
+    {
+        var cliente = new PessoaFisica("Laura Marinho", ValidCpf);
+
         var endereco = new Endereco(
-            "01310100", 
-            "Av Paulista", 
-            "1000", 
-            "bela Vista", 
-            "Sao Paulo",
+            ValidCep,
+            "Rua Teste",
+            "10",
+            "",
+            "Centro",
+            "São Paulo",
             "SP");
-        
-        var pessoFisica = new PessoaFisica("Joao Silva", "52998224725", endereco);
-        
-        _repositoryMock.Setup(x => x.GetByCpfAsync(It.IsAny<string>())).ReturnsAsync(pessoFisica);
-        _repositoryMock.Setup(x => x.DeleteAsync(It.IsAny<PessoaFisica>()))
-            .Returns(Task.CompletedTask);
-        
-        await _pessoaFisicaService.DeleteAsync("52998224725");
-        
-        _repositoryMock.Verify(x => x.DeleteAsync(It.IsAny<PessoaFisica>()), Times.Once);
+
+        cliente.AddEndereco(endereco);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(cliente);
+
+        _cepService
+            .Setup(c => c.GetEnderecoAsync(It.IsAny<string>()))
+            .ReturnsAsync(new EnderecoCepResult
+            {
+                Cep = ValidCep,
+                Logradouro = "Rua Atualizada",
+                Bairro = "Centro",
+                Cidade = "São Paulo",
+                Estado = "SP"
+            });
+
+        var request = new UpdatePessoaFisicaRequest
+        {
+            ClienteId = Guid.NewGuid(),
+            Nome = "Diego Rodrigues",
+            Cpf = ValidCpf,
+            Enderecos =
+            [
+                new UpdateEnderecoRequest
+                {
+                    EnderecoId = endereco.EnderecoId,
+                    Cep = ValidCep,
+                    NumeroEndereco = "200",
+                    Complemento = "Ap 10"
+                }
+            ]
+        };
+
+        await _service.UpdateAsync(request);
+
+        _clienteRepository.Verify(
+            r => r.UpdateAsync(It.IsAny<Cliente>()),
+            Times.Once);
     }
     
     [Test]
-    public async Task DeleteAsync_CpfNotExists_Should_ThrowsNotFoundExcepetion()
+    public async Task Should_Add_New_Address_On_Update()
     {
-        _repositoryMock.Setup(x => x.GetByCpfAsync(It.IsAny<string>()))
+        var cliente = new PessoaFisica("Pedro Hugo", ValidCpf);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(cliente);
+
+        _cepService
+            .Setup(c => c.GetEnderecoAsync(It.IsAny<string>()))
+            .ReturnsAsync(new EnderecoCepResult
+            {
+                Cep = ValidCep,
+                Logradouro = "Rua Nova",
+                Bairro = "Centro",
+                Cidade = "São Paulo",
+                Estado = "SP"
+            });
+
+        var request = new UpdatePessoaFisicaRequest
+        {
+            ClienteId = Guid.NewGuid(),
+            Nome = "Diego Garcia",
+            Cpf = ValidCpf,
+            Enderecos =
+            [
+                new UpdateEnderecoRequest
+                {
+                    Cep = ValidCep,
+                    NumeroEndereco = "300",
+                    Complemento = ""
+                }
+            ]
+        };
+
+        await _service.UpdateAsync(request);
+
+        _clienteRepository.Verify(
+            r => r.UpdateAsync(It.IsAny<Cliente>()),
+            Times.Once);
+    }
+    
+    [Test]
+    public async Task Should_Delete_PessoaFisica()
+    {
+        var cliente = new PessoaFisica("Jonatas Meireles", ValidCpf);
+
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(cliente);
+
+        await _service.DeleteAsync(Guid.NewGuid());
+
+        _clienteRepository.Verify(
+            r => r.DeleteAsync(It.IsAny<Cliente>()),
+            Times.Once);
+    }
+
+    [Test]
+    public void Should_Throw_When_Delete_Not_Found()
+    {
+        _clienteRepository
+            .Setup(r => r.GetPessoaFisicaByIdAsync(It.IsAny<Guid>()))
             .ReturnsAsync((PessoaFisica?)null);
-        
-        var ex = Assert.ThrowsAsync<NotFoundException>(() => _pessoaFisicaService.DeleteAsync("52998224725"));
-        Assert.That(ex!.Message, Is.EqualTo("Pessoa não encontrada."));
-    }*/
+
+        Assert.ThrowsAsync<NotFoundException>(
+            async () => await _service.DeleteAsync(Guid.NewGuid()));
+    }
 }
