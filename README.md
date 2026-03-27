@@ -1,6 +1,6 @@
 # Register API
 
-API REST para cadastro de pessoas físicas e jurídicas com validação de endereço via api ViaCEP.
+API REST para cadastro de pessoas físicas e jurídicas e endereços.
 
 ## Tecnologias
 
@@ -10,157 +10,117 @@ API REST para cadastro de pessoas físicas e jurídicas com validação de ender
 - FluentValidation
 - Swagger/OpenAPI
 
-## Arquitetura
+## Estrutura e Arquitetura
 
 Clean Architecture com camadas bem definidas:
 
 ```
-RegisterAPI/          - Camada API, controllers, middleware
-Application/           - Services, DTOs, validadores, interfaces
-Domain/                - Entidades, value objects, contratos de repositório
-Infrastructure/        - EF Core, repositórios, persistência
+RegisterAPI/        - Camada API (controllers, middleware)
+Application/        - Serviços de aplicação, DTOs, validadores, interfaces
+Domain/             - Entidades, Value Objects, exceções e contratos de repositório
+Infrastructure/     - EF Core, repositórios, integrações externas, configurações
 ```
 
-### Domain
+- `Domain`: `PessoaFisica`, `PessoaJuridica`, `Endereco`, `Cpf`, `Cnpj`, exceções de domínio.
+- `Application`: `PessoaFisicaService`, `PessoaJuridicaService`, mappers e validadores (FluentValidation).
+- `Infrastructure`: `AppDbContext`, `ClienteRepository`, integração `ViaCepProvider`.
 
-- **Entidades**: `PessoaFisica`, `PessoaJuridica`, `Endereco`
-- **Value Objects**: `Cpf`, `Cnpj` com validação
-- **Exceções**: `DomainException`, `BusinessException`, `NotFoundException`
-
-### Application
-
-- Services de regra de negócio (`PessoaFisicaService`, `PessoaJuridicaService`)
-- Integração ViaCEP para consulta de endereço
-- FluentValidation para validação de requisições
-
-### Infrastructure
-
-- SQL Server com EF Core
-- Repositórios implementando contratos do domínio
+Veja a inicialização em `RegisterAPI/Program.cs`.
 
 ## Pré-requisitos
 
 - .NET 10 SDK
-- SQL Server (local ou Docker)
-- Docker (opcional, para SQL Server em container)
+- SQL Server (local ou via Docker)
+- Docker (opcional)
 
-## Como executar
+## Como executar (rápido)
 
-### 1. Subir SQL Server com Docker
+1) Subir infraestrutura (opcional, docker-compose já incluído):
 
 ```bash
 docker-compose up -d
 ```
 
-SQL Server em `localhost:1433`. Credenciais padrão:
-- Usuário: `sa`
-- Senha: `Admin@123!`
-
-### 2. Executar migrações
+2) Aplicar migrações (executar no root da solução):
 
 ```bash
 dotnet ef database update --project Infrastructure --startup-project RegisterAPI
 ```
 
-### 3. Executar a API
+3) Rodar a API:
 
 ```bash
 dotnet run --project RegisterAPI
 ```
 
-- API: `https://localhost:5001` (ou verificar `launchSettings.json`)
-- Swagger: `https://localhost:5001/swagger`
+- A API geralmente fica em `https://localhost:5001` (ver `launchSettings.json`).
+- Swagger UI: `https://localhost:5001/swagger` (apenas em Development por padrão).
 
 ## Configuração
 
-`appsettings.json`:
+Configurações principais em `appsettings.json`:
 
-| Chave | Descrição |
-|-------|-----------|
-| `ConnectionStrings:DefaultConnection` | String de conexão SQL Server |
-| `ExternalServices:ViaCepBaseUrl` | URL base da API ViaCEP |
+- `ConnectionStrings:DefaultConnection` — string de conexão com o SQL Server.
+- `ExternalServices:ViaCepBaseUrl` — URL base da API ViaCEP (ex.: `https://viacep.com.br/ws/`).
 
-## Referência da API
+## Referência da API (endpoints principais)
 
-### Pessoa Física
+Observação: rotas definidas por controllers seguem `api/[controller]` com ações específicas.
 
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| POST | `/api/PessoasFisicas` | Criar |
-| GET | `/api/PessoasFisicas/buscar?cpf={cpf}` | Buscar por CPF |
-| PUT | `/api/PessoasFisicas/atualizar?cpf={cpf}` | Atualizar |
-| DELETE | `/api/PessoasFisicas/deletar?cpf={cpf}` | Excluir |
+**Pessoa Física** (`PessoasFisicasController`)
 
-**Request de criação** (`CreatePessoaFisicaRequest`):
+- POST `/api/PessoasFisicas/Create` — cria um cliente pessoa física.
+- GET `/api/PessoasFisicas/GetByClienteId/{clienteId}` — obtém por `clienteId` (GUID).
+- GET `/api/PessoasFisicas/GetByCpf/{cpf}` — obtém por CPF (string limpa).
+- PUT `/api/PessoasFisicas/Update` — atualiza cliente (envia `UpdatePessoaFisicaRequest`).
+- DELETE `/api/PessoasFisicas/Delete/{clienteId}` — soft delete por `clienteId`.
 
-```json
-{
-  "nome": "string",
-  "cpf": "string",
-  "cep": "string",
-  "numeroEndereco": "string"
-}
-```
-
-**Request de atualização** (`UpdatePessoaFisicaRequest`):
+Payload de criação (`CreatePessoaFisicaRequest`):
 
 ```json
 {
-  "nome": "string",
-  "cpf": "string",
-  "cep": "string",
-  "numeroEndereco": "string"
+  "nome": "João Silva",
+  "cpf": "123.456.789-09",
+  "enderecos": [
+    {
+      "cep": "01001-000",
+      "numeroEndereco": "100",
+      "complemento": "Apto 1"
+    }
+  ]
 }
 ```
 
-### Pessoa Jurídica
-
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| POST | `/api/PessoasJuridicas` | Criar |
-| GET | `/api/PessoasJuridicas/buscar?cnpj={cnpj}` | Buscar por CNPJ |
-| PUT | `/api/PessoasJuridicas/atualizar?cnpj={cnpj}` | Atualizar |
-| DELETE | `/api/PessoasJuridicas/deletar?cnpj={cnpj}` | Excluir |
-
-**Request de criação** (`CreatePessoaJuridicaRequest`):
+Payload de atualização (`UpdatePessoaFisicaRequest`):
 
 ```json
 {
-  "razaoSocial": "string",
-  "cnpj": "string",
-  "cep": "string",
-  "numeroEndereco": "string"
+  "clienteId": "00000000-0000-0000-0000-000000000000",
+  "nome": "João Silva Atualizado",
+  "cpf": "12345678909",
+  "enderecos": [
+    {
+      "enderecoId": null,
+      "cep": "01001-000",
+      "numeroEndereco": "101",
+      "complemento": null
+    }
+  ]
 }
 ```
 
-**Request de atualização** (`UpdatePessoaJuridicaRequest`):
+**Pessoa Jurídica** (`PessoasJuridicasController`) — endpoints equivalentes com rotas:
 
-```json
-{
-  "razaoSocial": "string",
-  "cnpj": "string",
-  "cep": "string",
-  "numeroEndereco": "string"
-}
-```
+- POST `/api/PessoasJuridicas/Create`
+- GET `/api/PessoasJuridicas/GetByClienteId/{clienteId}`
+- GET `/api/PessoasJuridicas/GetByCnpj/{cnpj}`
+- PUT `/api/PessoasJuridicas/Update`
+- DELETE `/api/PessoasJuridicas/Delete/{clienteId}`
 
-### Regras de validação
+## Tratamento de erros
 
-- **Nome / RazaoSocial**: Obrigatório, máx. 150 caracteres
-- **CPF / CNPJ**: Obrigatório, formato validado
-- **CEP**: Obrigatório, validado via ViaCEP
-- **NumeroEndereco**: Obrigatório
-
-### Respostas de erro
-
-| Status | Tipo de exceção |
-|--------|-----------------|
-| 400 Bad Request | `DomainException` |
-| 404 Not Found | `NotFoundException` |
-| 409 Conflict | `BusinessException` |
-| 500 Internal Server Error | Exceções não tratadas |
-
-Formato da resposta:
+- Exceções de domínio e de negócio usam tipos específicos (`DomainException`, `BusinessException`, `NotFoundException`).
+- Middleware `ExceptionMiddleware` padroniza respostas HTTP com JSON:
 
 ```json
 {
@@ -169,14 +129,25 @@ Formato da resposta:
 }
 ```
 
+Mapeamento de status mais comum:
+
+- 400 — `DomainException`
+- 404 — `NotFoundException`
+- 409 — `BusinessException`
+- 500 — erro não tratado
+
 ## Testes
+
+Rodar testes:
 
 ```bash
 dotnet test RegisterAPI.Tests
 ```
 
+Projetos de teste cobrem `Application` services e integração do provider de CEP.
+
+
+
 Testes com NUnit e Moq. Estrutura espelha a solução:
 
-- `Application/` - Services principais
-
-
+Application/ - Services principais
