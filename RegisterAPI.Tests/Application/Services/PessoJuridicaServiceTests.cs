@@ -1,6 +1,5 @@
 using Application.DTOs;
 using Application.DTOs.Request;
-using Application.DTOs.Responses;
 using Application.Interfaces;
 using Application.Services;
 using Domain.Entities;

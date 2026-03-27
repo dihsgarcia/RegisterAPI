@@ -2,8 +2,7 @@ namespace Domain.Entities;
 
 public class PessoaFisica : Cliente
 {
-    public string Nome { get; private set; }
-
+    
     private PessoaFisica() { }
 
     public PessoaFisica(string nome, string cpf) : base(nome,cpf)
